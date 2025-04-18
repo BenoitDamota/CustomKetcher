@@ -229,8 +229,10 @@ import QuestionMark from '../../../assets/icons/files/questionMark.svg';
 import Nucleotide from '../../../assets/icons/files/nucleotide.svg';
 import { IMAGE_KEY, MULTITAIL_ARROW_TOOL_NAME } from 'ketcher-core';
 import CrossIcon from '../../../assets/icons/files/cross.svg';
+import minimize from '../../../assets/icons/files/minimize.svg';
 
 export const iconNameToIcon = {
+  minimize,
   α,
   β,
   γ,

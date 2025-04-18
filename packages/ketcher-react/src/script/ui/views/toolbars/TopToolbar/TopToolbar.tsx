@@ -262,6 +262,17 @@ export const TopToolbar = ({
             hiddenButtons={hiddenButtons}
           />
         )}
+        <Divider />
+        <TopToolbarIconButton
+          title="Minimize"
+          onClick={() =>
+            console.log('=============== Minimize ===============')
+          }
+          iconName="minimize"
+          disabled={disabledButtons.includes('minimize')}
+          isHidden={hiddenButtons.includes('minimize')}
+          testId="minimize-button"
+        />
       </BtnsWpapper>
     </ControlsPanel>
   );
