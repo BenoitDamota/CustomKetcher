@@ -33,6 +33,7 @@ import { Root } from 'react-dom/client';
 import { IndigoProvider } from 'src/script/providers';
 import { STRUCT_SERVICE_INITIALIZED_EVENT } from '../../../constants';
 import { CustomButton } from './CustomButtons';
+import { LeftPanController } from 'src/LeftPanController';
 
 class KetcherBuilder {
   private structService: StructService | null;
@@ -99,6 +100,7 @@ class KetcherBuilder {
     buttons?: ButtonsConfig,
     togglerComponent?: JSX.Element,
     customButtons?: Array<CustomButton>,
+    leftPanController?: LeftPanController,
   ): Promise<{
     setKetcher: (ketcher: Ketcher) => void;
     ketcherId: string;
@@ -129,6 +131,7 @@ class KetcherBuilder {
         structService!,
         resolve,
         togglerComponent,
+        leftPanController,
       );
     });
 

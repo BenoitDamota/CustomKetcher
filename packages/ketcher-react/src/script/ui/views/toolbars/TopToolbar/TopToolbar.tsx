@@ -16,7 +16,7 @@
 
 import styled from '@emotion/styled';
 
-import { useResizeObserver } from 'src/hooks';
+import { useAppContext, useResizeObserver } from 'src/hooks';
 import { FileControls } from './FileControls';
 import { ClipboardControls } from './ClipboardControls';
 import { UndoRedo } from './UndoRedo';
@@ -157,6 +157,17 @@ export const TopToolbar = ({
   togglerComponent,
   customButtons,
 }: PanelProps) => {
+  // Get the leftPanController from the context
+  const { leftPanController } = useAppContext();
+
+  // If leftPanController or minimizeLeftPan() is undefined, provide a default function that logs a message
+  const minimizeLeftPanFunc =
+    leftPanController?.minimizeLeftPan ||
+    (() =>
+      console.log(
+        'LeftPanController.minimizeLeftPan() Uninitialized In TopToolbar.tsx',
+      ));
+
   const { ref: resizeRef, width = 50 } = useResizeObserver<HTMLDivElement>();
   const ketcher = ketcherProvider.getKetcher();
 
@@ -265,9 +276,7 @@ export const TopToolbar = ({
         <Divider />
         <TopToolbarIconButton
           title="Minimize"
-          onClick={() =>
-            console.log('=============== Minimize ===============')
-          }
+          onClick={() => minimizeLeftPanFunc()}
           iconName="minimize"
           disabled={disabledButtons.includes('minimize')}
           isHidden={hiddenButtons.includes('minimize')}

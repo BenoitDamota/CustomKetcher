@@ -34,6 +34,7 @@ import {
   KETCHER_ROOT_NODE_CLASS_NAME,
 } from './constants';
 import { KetcherBuilder } from './script/builders';
+import { LeftPanController } from './LeftPanController';
 
 const mediaSizes = {
   smallWidth: 1040,
@@ -42,6 +43,7 @@ const mediaSizes = {
 
 export interface EditorProps extends Omit<Config, 'element' | 'appRoot'> {
   onInit?: (ketcher: Ketcher) => void;
+  leftPanController?: LeftPanController;
 }
 
 function MicromoleculesEditor(props: EditorProps) {
@@ -73,6 +75,7 @@ function MicromoleculesEditor(props: EditorProps) {
       ...props,
       element: rootElRef.current,
       appRoot: appRootRef.current,
+      leftPanController: props.leftPanController,
     });
 
     initPromiseRef.current?.then(

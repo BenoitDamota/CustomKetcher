@@ -2,11 +2,13 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import { MicromoleculesEditor, EditorProps } from './MicromoleculesEditor';
 import { ModeControl } from './script/ui/views/toolbars/ModeControl';
 import { LoadingCircles } from './script/ui/views/components';
+import { LeftPanController } from './LeftPanController';
 
 import styles from './Editor.module.less';
 
 type Props = EditorProps & {
   disableMacromoleculesEditor?: boolean;
+  leftPanController?: LeftPanController;
 };
 
 /*
@@ -27,6 +29,18 @@ export const Editor = (props: Props) => {
     setShowPolymerEditor(toggleValue);
     window.isPolymerEditorTurnedOn = toggleValue;
   };
+
+  // Default leftPanController if not provided
+  const defaultLeftPanController: LeftPanController = {
+    minimizeLeftPan: () => {
+      console.log(
+        'LeftPanController is uninitialized - minimizeLeftPan() was called but not defined',
+      );
+    },
+  };
+
+  // Use the provided leftPanController or fallback to the default one
+  const leftPanController = props.leftPanController || defaultLeftPanController;
 
   const togglerComponent = !props.disableMacromoleculesEditor ? (
     <ModeControl
@@ -64,6 +78,7 @@ export const Editor = (props: Props) => {
           <MicromoleculesEditor
             {...props}
             togglerComponent={togglerComponent}
+            leftPanController={leftPanController}
           />
         </Suspense>
       )}

@@ -29,6 +29,7 @@ import createStore, { setServer } from '../state';
 import { initKeydownListener, removeKeydownListener } from '../state/hotkeys';
 import { initResize } from '../state/toolbar';
 import { initMouseListener, removeMouseListeners } from '../state/mouse';
+import { LeftPanController } from 'src/LeftPanController';
 
 function initApp(
   element: HTMLDivElement | null,
@@ -43,6 +44,7 @@ function initApp(
     setServer: (server: StructService) => void;
   }) => void,
   togglerComponent?: JSX.Element,
+  leftPanController?: LeftPanController,
 ) {
   let ketcherRef: Ketcher | null = null;
   const setKetcher = (ketcher: Ketcher) => {
@@ -79,6 +81,7 @@ function initApp(
               // Expected this is set before load
               getKetcherInstance: () => ketcherRef as unknown as Ketcher,
               ketcherId,
+              leftPanController,
             }}
           >
             <App togglerComponent={togglerComponent} />

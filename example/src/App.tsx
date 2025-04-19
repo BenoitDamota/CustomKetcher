@@ -7,6 +7,7 @@ import {
   RemoteStructServiceProvider,
   StructServiceProvider,
 } from 'ketcher-core';
+import { LeftPanController } from './LeftPanController';
 
 const getHiddenButtonsConfig = (): ButtonsConfig => {
   const searchParams = new URLSearchParams(window.location.search);
@@ -40,6 +41,13 @@ const App = () => {
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
+  // Define leftPanController inside the App component
+  const leftPanController: LeftPanController = {
+    minimizeLeftPan: () => {
+      console.log('========== Left Pan Minimize =====');
+    },
+  };
+
   return (
     <>
       <Editor
@@ -61,6 +69,7 @@ const App = () => {
           );
           window.scrollTo(0, 0);
         }}
+        leftPanController={leftPanController}
       />
       {hasError && (
         <InfoModal

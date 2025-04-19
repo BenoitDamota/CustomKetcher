@@ -29,6 +29,7 @@ interface Config {
   customButtons?: Array<CustomButton>;
   errorHandler: (message: string) => void;
   togglerComponent?: JSX.Element;
+  leftPanController?: LeftPanController;
 }
 
 async function buildKetcherAsync({
@@ -40,6 +41,7 @@ async function buildKetcherAsync({
   errorHandler,
   togglerComponent,
   customButtons,
+  leftPanController,
 }: Config) {
   const builder = new KetcherBuilder();
 
@@ -54,6 +56,7 @@ async function buildKetcherAsync({
       buttons,
       togglerComponent,
       customButtons,
+      leftPanController,
     );
 
   const ketcher = builder.build();

@@ -16,10 +16,12 @@
 
 import { Ketcher } from 'ketcher-core';
 import React from 'react';
+import { LeftPanController } from 'src/LeftPanController';
 
 export interface IAppContext {
   getKetcherInstance: () => Ketcher;
   ketcherId: string;
+  leftPanController?: LeftPanController;
 }
 
 const appContext = React.createContext<IAppContext>({} as IAppContext);
