@@ -19,6 +19,7 @@ import { ButtonsConfig, KetcherBuilder } from './builders';
 
 import { StructServiceProvider } from 'ketcher-core';
 import { CustomButton } from './builders/ketcher/CustomButtons';
+import { LeftPanController } from 'src/LeftPanController';
 
 interface Config {
   element: HTMLDivElement | null;
