@@ -1,9 +1,9 @@
 import KetcherEditor from './KetcherEditor';
-import { LeftPanController } from '../../LeftPanController';
-import { useApp } from '../../context/AppContext';
+import { LeftPanController } from '../../types/LeftPanController';
+import { useAppContext } from '../../context/AppContext';
 
 export default function LeftPane(props: { isLeftPanReduced: boolean }) {
-  const appCtx = useApp();
+  const appCtx = useAppContext();
 
   const leftPanController: LeftPanController = {
     minimizeLeftPan: appCtx.minimizeLeftPan,
@@ -11,7 +11,7 @@ export default function LeftPane(props: { isLeftPanReduced: boolean }) {
 
   return (
     <div style={{ height: '100%' }}>
-      {props.isLeftPanReduced ? (
+      {props.isLeftPanReduced && (
         <button
           style={{
             all: 'unset',
@@ -47,9 +47,18 @@ export default function LeftPane(props: { isLeftPanReduced: boolean }) {
             chevron_right
           </span>
         </button>
-      ) : (
-        <KetcherEditor leftPanController={leftPanController} />
       )}
+
+      <div
+        style={{
+          width: '100%',
+          height: '100%',
+          display: props.isLeftPanReduced ? 'none' : 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <KetcherEditor leftPanController={leftPanController} />
+      </div>
     </div>
   );
 }

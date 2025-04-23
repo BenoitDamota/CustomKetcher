@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 
 export const MIN_WIDTH_LEFT_PAN = 550;
-export const MIN_WIDTH_RIGHT_PAN = 30;
+export const MIN_WIDTH_RIGHT_PAN = 315;
 
 type AppContextType = {
   ketcherRef: React.RefObject<unknown>;
@@ -105,8 +105,8 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-export const useApp = () => {
+export const useAppContext = () => {
   const ctx = useContext(AppContext);
-  if (!ctx) throw new Error('useApp must be used within an AppProvider');
+  if (!ctx) throw new Error('useAppContext must be used within an AppProvider');
   return ctx;
 };

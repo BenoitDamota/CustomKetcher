@@ -1,11 +1,12 @@
-import { useApp } from '../../context/AppContext';
+import { useAppContext } from '../../context/AppContext';
+import Spectrum from './Spectrum';
 
 export default function RightPane(props: { isRightPanReduced: boolean }) {
-  const appCtx = useApp();
+  const appCtx = useAppContext();
 
   return (
     <div style={{ height: '100%' }}>
-      {props.isRightPanReduced ? (
+      {props.isRightPanReduced && (
         <button
           style={{
             all: 'unset',
@@ -41,14 +42,18 @@ export default function RightPane(props: { isRightPanReduced: boolean }) {
             chevron_left
           </span>
         </button>
-      ) : (
-        <div>
-          <p>Right Pan</p>
-          <button onClick={() => appCtx.minimizeRightPan()}>
-            Reduce Right Pan
-          </button>
-        </div>
       )}
+
+      <div
+        style={{
+          width: '100%',
+          height: '100%',
+          display: props.isRightPanReduced ? 'none' : 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <Spectrum />
+      </div>
     </div>
   );
 }

@@ -64,14 +64,4 @@ nav .material-symbols-outlined:hover {
   color: #fff;
 }
 
-.btn,
-a {
-  background-color: #167782;
-  color: #fff;
-  transition: background-color 0.3s ease;
-}
 
-.btn:hover,
-a:hover {
-  background-color: #188794;
-}

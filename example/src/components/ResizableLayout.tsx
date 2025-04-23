@@ -1,5 +1,5 @@
 import {
-  useApp,
+  useAppContext,
   MIN_WIDTH_LEFT_PAN,
   MIN_WIDTH_RIGHT_PAN,
 } from '../context/AppContext';
@@ -9,7 +9,7 @@ import RightPane from './RightPan/RightPan';
 
 export default function ResizableLayout() {
   const { leftWidth, setLeftWidth, isLeftPanReduced, isRightPanReduced } =
-    useApp();
+    useAppContext();
   const isResizingRef = useRef(false);
 
   const aPanIsReduced = isLeftPanReduced || isRightPanReduced;
