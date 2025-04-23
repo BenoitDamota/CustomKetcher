@@ -1,31 +1,9 @@
-// import { useApp } from "../AppContext";
-
 import { useState } from 'react';
-import logoIMG from '../assets/logo.png';
+import logoIMG from '../../assets/logo.png';
 import InputBarSMILES from './InputBarSmiles';
 
 export default function Toolbar() {
   const [inputSmilesBar, setInputSmilesBar] = useState('');
-
-  //   const { ketcherRef, spectreRef } = useApp();
-
-  //   const handlePrediction = async () => {
-  //     const smile = ketcherRef.current.getSMILES();
-  //     const prediction = await apiPrediction(smile);
-  //     spectreRef.current.setData(prediction.x, prediction.y, prediction.z);
-  //   };
-
-  //   const handleLoad = async (file: any) => {
-  //     const { spectre, molecules } = await loadFile(file);
-  //     spectreRef.current.setData(spectre.x, spectre.y, spectre.z);
-  //     ketcherRef.current.loadMolecules(molecules);
-  //   };
-
-  //   const handleExport = () => {
-  //     const img1 = ketcherRef.current.exportImage();
-  //     const img2 = spectreRef.current.exportImage();
-  //     exportFile(img1, img2);
-  //   };
 
   function handlePrediction() {
     if (inputSmilesBar) {
@@ -158,21 +136,3 @@ export default function Toolbar() {
     </nav>
   );
 }
-
-// // Simulé pour l’exemple
-// const apiPrediction = async (smile: string) => {
-//   console.log("API Prediction for", smile);
-//   return { x: [1, 2], y: [10, 20], z: [100, 200] };
-// };
-
-// const loadFile = async (file: any) => {
-//   console.log("Load file", file);
-//   return {
-//     spectre: { x: [0], y: [1], z: [2] },
-//     molecules: "moleculeData",
-//   };
-// };
-
-// const exportFile = (img1: string, img2: string) => {
-//   console.log("Exporting images:", img1, img2);
-// };

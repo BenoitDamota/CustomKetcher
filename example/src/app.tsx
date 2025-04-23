@@ -1,8 +1,7 @@
 import { AppProvider } from './context/AppContext';
 import ResizableLayout from './components/ResizableLayout';
-
+import Toolbar from './components/TopToolBar/Toolbar';
 import './style/style.css';
-import Toolbar from './components/Toolbar';
 
 function App() {
   return (

@@ -1,5 +1,8 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 
+export const MIN_WIDTH_LEFT_PAN = 550;
+export const MIN_WIDTH_RIGHT_PAN = 30;
+
 type AppContextType = {
   ketcherRef: React.RefObject<unknown>;
   spectreRef: React.RefObject<unknown>;
@@ -7,9 +10,9 @@ type AppContextType = {
   isLeftPanReduced: boolean;
   isRightPanReduced: boolean;
   setLeftWidth: (width: number) => void;
-  resetLeftWidth: () => void;
   minimizeLeftPan: () => void;
   minimizeRightPan: () => void;
+  expandPanel: (target: 'LEFT' | 'RIGHT') => void;
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -24,25 +27,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLeftPanReduced, reduceLeftPan] = useState(false);
   const [isRightPanReduced, reduceRightPan] = useState(false);
 
-  useEffect(() => {
-    const handleResize = () => {
-      if (!isLeftPanReduced && !isRightPanReduced) {
-        setLeftWidth(window.innerWidth / 2);
-      } else if (isRightPanReduced) {
-        setLeftWidth(window.innerWidth);
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [isLeftPanReduced, isRightPanReduced]);
-
-  function resetLeftWidth() {
-    setLeftWidth(initialLeftWidth);
-    reduceLeftPan(false);
-    reduceRightPan(false);
-  }
-
   function minimizeLeftPan() {
     setLeftWidth(0);
     reduceLeftPan(true);
@@ -55,6 +39,53 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     reduceLeftPan(false);
   }
 
+  useEffect(() => {
+    const handleResize = () => {
+      const newWidth = window.innerWidth;
+
+      // Si les deux panneaux sont affichés
+      if (!isLeftPanReduced && !isRightPanReduced) {
+        const newLeftWidth = newWidth / 2;
+
+        // Vérifie si le leftPanel devient trop petit
+        if (newLeftWidth < MIN_WIDTH_LEFT_PAN) {
+          minimizeLeftPan();
+        } else {
+          setLeftWidth(newLeftWidth);
+        }
+      } else if (isRightPanReduced) {
+        setLeftWidth(newWidth);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isLeftPanReduced, isRightPanReduced]);
+
+  function expandPanel(target: 'LEFT' | 'RIGHT') {
+    const totalWidth = window.innerWidth;
+    const desiredLeftWidth = totalWidth / 2;
+
+    if (
+      desiredLeftWidth > MIN_WIDTH_LEFT_PAN &&
+      desiredLeftWidth > MIN_WIDTH_RIGHT_PAN
+    ) {
+      reduceLeftPan(false);
+      reduceRightPan(false);
+      setLeftWidth(desiredLeftWidth);
+    } else {
+      if (target === 'LEFT') {
+        reduceLeftPan(false);
+        reduceRightPan(true);
+        setLeftWidth(totalWidth);
+      } else {
+        reduceRightPan(false);
+        reduceLeftPan(true);
+        setLeftWidth(0);
+      }
+    }
+  }
+
   return (
     <AppContext.Provider
       value={{
@@ -64,9 +95,9 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         isLeftPanReduced,
         isRightPanReduced,
         setLeftWidth,
-        resetLeftWidth,
         minimizeLeftPan,
         minimizeRightPan,
+        expandPanel,
       }}
     >
       {children}

@@ -1,7 +1,11 @@
-import { useApp } from '../context/AppContext';
+import {
+  useApp,
+  MIN_WIDTH_LEFT_PAN,
+  MIN_WIDTH_RIGHT_PAN,
+} from '../context/AppContext';
 import { useRef, useState } from 'react';
-import LeftPane from './LeftPan';
-import RightPane from './RightPan';
+import LeftPane from './LeftPan/LeftPan';
+import RightPane from './RightPan/RightPan';
 
 export default function ResizableLayout() {
   const { leftWidth, setLeftWidth, isLeftPanReduced, isRightPanReduced } =
@@ -9,8 +13,6 @@ export default function ResizableLayout() {
   const isResizingRef = useRef(false);
 
   const aPanIsReduced = isLeftPanReduced || isRightPanReduced;
-
-  console.log(isLeftPanReduced, isRightPanReduced);
 
   const handleMouseDown = () => {
     if (aPanIsReduced) return;
@@ -21,7 +23,10 @@ export default function ResizableLayout() {
   const handleMouseMove = (e: MouseEvent) => {
     if (!isResizingRef.current) return;
     const newWidth = e.clientX;
-    if (newWidth > 100 && newWidth < window.innerWidth - 100) {
+    if (
+      newWidth > MIN_WIDTH_LEFT_PAN &&
+      newWidth < window.innerWidth - MIN_WIDTH_RIGHT_PAN
+    ) {
       setLeftWidth(newWidth);
     }
   };
@@ -31,7 +36,6 @@ export default function ResizableLayout() {
     document.body.style.userSelect = '';
   };
 
-  // Attach mouse move/up to window
   useState(() => {
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);

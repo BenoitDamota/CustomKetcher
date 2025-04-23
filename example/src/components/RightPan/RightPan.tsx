@@ -1,17 +1,11 @@
-import KetcherEditor from './KetcherEditor';
-import { LeftPanController } from '../LeftPanController';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../../context/AppContext';
 
-export default function LeftPane(props: { isLeftPanReduced: boolean }) {
+export default function RightPane(props: { isRightPanReduced: boolean }) {
   const appCtx = useApp();
-
-  const leftPanController: LeftPanController = {
-    minimizeLeftPan: appCtx.minimizeLeftPan,
-  };
 
   return (
     <div style={{ height: '100%' }}>
-      {props.isLeftPanReduced ? (
+      {props.isRightPanReduced ? (
         <button
           style={{
             all: 'unset',
@@ -22,7 +16,7 @@ export default function LeftPane(props: { isLeftPanReduced: boolean }) {
             position: 'relative',
             cursor: 'pointer',
           }}
-          onClick={() => appCtx.resetLeftWidth()}
+          onClick={() => appCtx.expandPanel('RIGHT')}
         >
           <span
             className="material-symbols-outlined"
@@ -33,7 +27,7 @@ export default function LeftPane(props: { isLeftPanReduced: boolean }) {
               transform: 'translateX(-50%)',
             }}
           >
-            edit
+            search_insights
           </span>
           <span
             className="material-symbols-outlined"
@@ -44,11 +38,16 @@ export default function LeftPane(props: { isLeftPanReduced: boolean }) {
               transform: 'translate(-50%, -50%)',
             }}
           >
-            chevron_right
+            chevron_left
           </span>
         </button>
       ) : (
-        <KetcherEditor leftPanController={leftPanController} />
+        <div>
+          <p>Right Pan</p>
+          <button onClick={() => appCtx.minimizeRightPan()}>
+            Reduce Right Pan
+          </button>
+        </div>
       )}
     </div>
   );

@@ -3,7 +3,7 @@ import 'ketcher-react/dist/index.css';
 import { useState } from 'react';
 import { ButtonsConfig, Editor, InfoModal } from 'ketcher-react';
 import { Ketcher, StructServiceProvider } from 'ketcher-core';
-import { LeftPanController } from '../LeftPanController';
+import { LeftPanController } from '../../LeftPanController';
 
 const getHiddenButtonsConfig = (): ButtonsConfig => {
   const searchParams = new URLSearchParams(window.location.search);
@@ -53,7 +53,7 @@ const KetcherEditor = (props: {
           window.scrollTo(0, 0);
         }}
         leftPanController={props.leftPanController}
-        disableMacromoleculesEditor={false}
+        disableMacromoleculesEditor={true}
       />
       )
       {hasError && (
