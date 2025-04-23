@@ -73,6 +73,7 @@ export interface PanelProps {
 
 const collapseLimit = 650;
 const CUSTOM_BUTTON_ADDITIONAL_WIDTH = 40;
+const MINIMIZE_BUTTON_AND_DIVIDER_ADDITIONAL_WIDTH = 120;
 
 const ControlsPanel = styled('div')`
   display: flex;
@@ -178,7 +179,9 @@ export const TopToolbar = ({
 
   const collapseLimitWithCustomButtons = useMemo(() => {
     return (
-      collapseLimit + customButtons.length * CUSTOM_BUTTON_ADDITIONAL_WIDTH
+      collapseLimit +
+      customButtons.length * CUSTOM_BUTTON_ADDITIONAL_WIDTH +
+      MINIMIZE_BUTTON_AND_DIVIDER_ADDITIONAL_WIDTH
     );
   }, [customButtons.length]);
 
