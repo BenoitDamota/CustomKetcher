@@ -2,12 +2,8 @@ import 'ketcher-react/dist/index.css';
 
 import { useState } from 'react';
 import { ButtonsConfig, Editor, InfoModal } from 'ketcher-react';
-import {
-  Ketcher,
-  RemoteStructServiceProvider,
-  StructServiceProvider,
-} from 'ketcher-core';
-import { LeftPanController } from './LeftPanController';
+import { Ketcher, StructServiceProvider } from 'ketcher-core';
+import { LeftPanController } from '../LeftPanController';
 
 const getHiddenButtonsConfig = (): ButtonsConfig => {
   const searchParams = new URLSearchParams(window.location.search);
@@ -17,36 +13,23 @@ const getHiddenButtonsConfig = (): ButtonsConfig => {
 
   return hiddenButtons.split(',').reduce((acc, button) => {
     if (button) acc[button] = { hidden: true };
-
     return acc;
-  }, {});
+  }, {} as ButtonsConfig);
 };
 
-let structServiceProvider: StructServiceProvider =
-  new RemoteStructServiceProvider(
-    process.env.API_PATH || process.env.REACT_APP_API_PATH,
-  );
+const {
+  StandaloneStructServiceProvider,
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+} = require('ketcher-standalone');
+const structServiceProvider =
+  new StandaloneStructServiceProvider() as StructServiceProvider;
 
-if (process.env.MODE === 'standalone') {
-  const {
-    StandaloneStructServiceProvider,
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-  } = require('ketcher-standalone');
-  structServiceProvider =
-    new StandaloneStructServiceProvider() as StructServiceProvider;
-}
-
-const App = () => {
+const KetcherEditor = (props: {
+  leftPanController: LeftPanController | undefined;
+}) => {
   const hiddenButtonsConfig = getHiddenButtonsConfig();
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-
-  // Define leftPanController inside the App component
-  const leftPanController: LeftPanController = {
-    minimizeLeftPan: () => {
-      console.log('========== Left Pan Minimize =====');
-    },
-  };
 
   return (
     <>
@@ -69,8 +52,10 @@ const App = () => {
           );
           window.scrollTo(0, 0);
         }}
-        leftPanController={leftPanController}
+        leftPanController={props.leftPanController}
+        disableMacromoleculesEditor={false}
       />
+      )
       {hasError && (
         <InfoModal
           message={errorMessage}
@@ -88,4 +73,4 @@ const App = () => {
   );
 };
 
-export default App;
+export default KetcherEditor;
