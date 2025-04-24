@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import logoIMG from '../../assets/logo.png';
 import InputBarSMILES from './InputBarSmiles';
+import { useAppContext } from '../../context/AppContext';
 
 export default function Toolbar() {
+  const appCtx = useAppContext();
+
   const [inputSmilesBar, setInputSmilesBar] = useState('');
 
   function handlePrediction() {
@@ -58,7 +61,7 @@ export default function Toolbar() {
         position: 'relative',
       }}
     >
-      {/* Gauche */}
+      {/* Left Controls */}
       <div
         style={{
           display: 'flex',
@@ -81,13 +84,24 @@ export default function Toolbar() {
           }}
         >
           <button
+            title="Open File"
             className="material-symbols-outlined"
             onClick={() => handleLoad()}
           >
             file_open
           </button>
-          <span className="material-symbols-outlined">save_as</span>
           <button
+            title="Save As"
+            onClick={() => {
+              // eslint-disable-next-line no-alert
+              alert('save');
+            }}
+            className="material-symbols-outlined"
+          >
+            save_as
+          </button>
+          <button
+            title="Export"
             className="material-symbols-outlined"
             onClick={() => handleExport}
           >
@@ -96,7 +110,7 @@ export default function Toolbar() {
         </div>
       </div>
 
-      {/* Milieu (centré absolument) */}
+      {/* Middle Controls (absolute - center) */}
       <div
         style={{
           position: 'absolute',
@@ -111,13 +125,20 @@ export default function Toolbar() {
         }}
       >
         <button
+          title="Start Prediction"
           className="material-symbols-outlined"
           onClick={() => handlePrediction()}
         >
           send
         </button>
         <InputBarSMILES input={inputSmilesBar} setInput={setInputSmilesBar} />
-        <span className="material-symbols-outlined">manufacturing</span>
+        <button
+          title="Prediction Settings"
+          onClick={() => appCtx.openModal('PredictionSettings')}
+          className="material-symbols-outlined"
+        >
+          manufacturing
+        </button>
       </div>
 
       {/* Droite */}
@@ -129,9 +150,29 @@ export default function Toolbar() {
           gap: '8px',
         }}
       >
-        <span className="material-symbols-outlined">settings</span>
-        <span className="material-symbols-outlined">help</span>
-        <span className="material-symbols-outlined">info</span>
+        <button
+          title="General Settings"
+          onClick={() => appCtx.openModal('GeneralSettings')}
+          className="material-symbols-outlined"
+        >
+          settings
+        </button>
+        <button
+          title="Visit Help Documentation"
+          onClick={() =>
+            window.open('https://github.com/KreeZeG123/PredictionRMN', '_blank')
+          }
+          className="material-symbols-outlined"
+        >
+          help
+        </button>
+        <button
+          title="About The App"
+          onClick={() => appCtx.openModal('About')}
+          className="material-symbols-outlined"
+        >
+          info
+        </button>
       </div>
     </nav>
   );

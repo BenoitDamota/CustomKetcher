@@ -53,6 +53,9 @@ nav .material-symbols-outlined:hover {
   color: #188794;
 }
 
+.hover-red:hover {
+  color: red !important;
+}
 
 .menu-clair {
   background-color: #FCFCFC;
@@ -64,4 +67,36 @@ nav .material-symbols-outlined:hover {
   color: #fff;
 }
 
+/* Change the tooltip style so it match the global style */
+.plotly .modebar-btn[data-title]:hover::after {
+  content: attr(data-title);
+  background-color: rgb(255, 255, 255);  /* Fond clair avec transparence */
+  color: #333;
+  padding: 5px 10px;
+  border-radius: 2px;
+  border: 1px solid #333;
+  font-size: 12px;
+  white-space: nowrap;
+  box-shadow: none;
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+.plotly .modebar-btn[data-title]:hover::after {
+  opacity: 1;
+}
 
+/* Change order so that the tooltip fit */
+.modebar {
+  display: flex;
+  flex-direction: row;
+}
+.modebar-group:nth-child(1) {
+  order: 2;
+}
+.modebar-group:nth-child(2) {
+  order: 1;
+}
+.modebar-group:nth-child(3) {
+  order: 3;
+}

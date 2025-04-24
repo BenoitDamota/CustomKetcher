@@ -3,6 +3,8 @@ import { createContext, useContext, useEffect, useRef, useState } from 'react';
 export const MIN_WIDTH_LEFT_PAN = 550;
 export const MIN_WIDTH_RIGHT_PAN = 315;
 
+type ModalName = 'GeneralSettings' | 'About' | 'PredictionSettings' | null;
+
 type AppContextType = {
   ketcherRef: React.RefObject<unknown>;
   spectreRef: React.RefObject<unknown>;
@@ -13,6 +15,9 @@ type AppContextType = {
   minimizeLeftPan: () => void;
   minimizeRightPan: () => void;
   expandPanel: (target: 'LEFT' | 'RIGHT') => void;
+  openModal: (name: ModalName) => void;
+  closeModal: () => void;
+  activeModal: ModalName;
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -86,6 +91,13 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }
 
+  const [activeModal, setActiveModal] = useState<ModalName>(null);
+
+  const openModal = (name: ModalName) => {
+    setActiveModal(name);
+  };
+  const closeModal = () => setActiveModal(null);
+
   return (
     <AppContext.Provider
       value={{
@@ -98,6 +110,9 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         minimizeLeftPan,
         minimizeRightPan,
         expandPanel,
+        openModal,
+        closeModal,
+        activeModal,
       }}
     >
       {children}

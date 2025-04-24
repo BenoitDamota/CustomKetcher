@@ -34,22 +34,15 @@ export default function InputBarSMILES(props: {
 
       {/* Clear icon */}
       <button
+        title="Clear SMILES"
         onClick={() => props.setInput('')}
-        className="material-symbols-outlined"
+        className="material-symbols-outlined hover-red"
         style={{
           visibility: props.input ? 'visible' : 'hidden',
           marginLeft: '10px',
           fontSize: '24px',
           cursor: 'pointer',
           color: '#757575',
-        }}
-        onMouseEnter={(e) => {
-          const target = e.target as HTMLSpanElement;
-          target.style.color = 'red';
-        }}
-        onMouseLeave={(e) => {
-          const target = e.target as HTMLSpanElement;
-          target.style.color = '#757575';
         }}
       >
         close

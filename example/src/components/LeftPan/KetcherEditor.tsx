@@ -55,7 +55,7 @@ const KetcherEditor = (props: {
         leftPanController={props.leftPanController}
         disableMacromoleculesEditor={true}
       />
-      )
+
       {hasError && (
         <InfoModal
           message={errorMessage}
