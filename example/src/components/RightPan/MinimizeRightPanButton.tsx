@@ -1,10 +1,11 @@
 import { useRef, useEffect } from 'react';
 import MinimizeIcon from '../../assets/minimize.svg';
-import { useAppContext } from '../../context/AppContext';
 
-const MinimizeButton = () => {
-  const appCtx = useAppContext();
+interface Props {
+  minimizeRightPan: () => void;
+}
 
+const MinimizeButton: React.FC<Props> = ({ minimizeRightPan }) => {
   const btnRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
@@ -20,10 +21,7 @@ const MinimizeButton = () => {
 
   return (
     <>
-      <button
-        className="minimize-btn"
-        onClick={() => appCtx.minimizeRightPan()}
-      >
+      <button className="minimize-btn" onClick={() => minimizeRightPan()}>
         <MinimizeIcon />
       </button>
       <style>

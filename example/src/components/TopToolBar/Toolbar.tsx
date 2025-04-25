@@ -134,7 +134,7 @@ export default function Toolbar() {
         <InputBarSMILES input={inputSmilesBar} setInput={setInputSmilesBar} />
         <button
           title="Prediction Settings"
-          onClick={() => appCtx.openModal('PredictionSettings')}
+          onClick={() => appCtx.openModal('PredictionParameters')}
           className="material-symbols-outlined"
         >
           manufacturing

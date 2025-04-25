@@ -1,12 +1,19 @@
-import { useAppContext } from '../../context/AppContext';
 import Spectrum from './Spectrum';
 
-export default function RightPane(props: { isRightPanReduced: boolean }) {
-  const appCtx = useAppContext();
+interface Props {
+  isRightPanReduced: boolean;
+  minimizeRightPan: () => void;
+  expandPanel: (target: 'LEFT' | 'RIGHT') => void;
+}
 
+const RightPan: React.FC<Props> = ({
+  isRightPanReduced,
+  minimizeRightPan,
+  expandPanel,
+}) => {
   return (
     <div style={{ height: '100%' }}>
-      {props.isRightPanReduced && (
+      {isRightPanReduced && (
         <button
           style={{
             all: 'unset',
@@ -17,7 +24,7 @@ export default function RightPane(props: { isRightPanReduced: boolean }) {
             position: 'relative',
             cursor: 'pointer',
           }}
-          onClick={() => appCtx.expandPanel('RIGHT')}
+          onClick={() => expandPanel('RIGHT')}
         >
           <span
             className="material-symbols-outlined"
@@ -48,12 +55,14 @@ export default function RightPane(props: { isRightPanReduced: boolean }) {
         style={{
           width: '100%',
           height: '100%',
-          display: props.isRightPanReduced ? 'none' : 'flex',
+          display: isRightPanReduced ? 'none' : 'flex',
           flexDirection: 'column',
         }}
       >
-        <Spectrum />
+        <Spectrum minimizeRightPan={minimizeRightPan} />
       </div>
     </div>
   );
-}
+};
+
+export default RightPan;

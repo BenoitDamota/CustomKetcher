@@ -15,28 +15,27 @@ import {
   TextField,
   Typography,
   FormControlLabel,
+  Snackbar,
+  Alert,
 } from '@mui/material';
-import {
-  GeneralSettingsCategoryType,
-  GeneralSettingType,
-} from '../../types/GeneralSettingsType';
-import { mockSettingsCategories } from '../../mock/generalSettingsData'; // Import mock data
+import { GeneralSettingType } from '../../types/GeneralSettingsType';
+import { useAppContext } from '../../context/AppContext';
 
 interface Props {
   onClose: () => void;
-  onApply?: (settings: Record<string, string | number | boolean>) => void;
 }
 
-const SettingsModalTemplate: React.FC<Props> = ({ onClose, onApply }) => {
-  const generalSettingsCatergories: GeneralSettingsCategoryType[] =
-    mockSettingsCategories;
+const SettingsModalTemplate: React.FC<Props> = ({ onClose }) => {
+  const { generalSettings, setGeneralSettings } = useAppContext();
+
+  const [successMessage, setSuccessMessage] = useState<string>('');
 
   // Init values with stocked values or default
   const [values, setValues] = useState<
     Record<string, string | number | boolean>
   >(() => {
     const initial: Record<string, string | number | boolean> = {};
-    generalSettingsCatergories.forEach((category) =>
+    generalSettings.forEach((category) =>
       category.settings.forEach((setting) => {
         initial[setting.key] =
           setting.value !== undefined ? setting.value : setting.default;
@@ -54,12 +53,30 @@ const SettingsModalTemplate: React.FC<Props> = ({ onClose, onApply }) => {
   // Function to reset the all settings to default values
   const handleResetToDefault = () => {
     const initial: Record<string, string | number | boolean> = {};
-    generalSettingsCatergories.forEach((category) =>
+    generalSettings.forEach((category) =>
       category.settings.forEach((setting) => {
         initial[setting.key] = setting.default;
       }),
     );
     setValues(initial);
+  };
+
+  const handleApply = () => {
+    const updatedCategories = generalSettings.map((category) => ({
+      ...category,
+      settings: category.settings.map((setting) => ({
+        ...setting,
+        value: values[setting.key],
+      })),
+    }));
+
+    setGeneralSettings(updatedCategories);
+
+    setSuccessMessage('Settings successfully applied');
+    setTimeout(() => {
+      setSuccessMessage('');
+      onClose();
+    }, 3000);
   };
 
   // Dynamic render of the fields according to their types
@@ -122,7 +139,7 @@ const SettingsModalTemplate: React.FC<Props> = ({ onClose, onApply }) => {
         <strong>General Settings</strong>
       </DialogContentText>
       <br />
-      {generalSettingsCatergories.map((category) => (
+      {generalSettings.map((category) => (
         <Accordion key={category.settingsCategoryName}>
           <AccordionSummary
             expandIcon={
@@ -157,12 +174,23 @@ const SettingsModalTemplate: React.FC<Props> = ({ onClose, onApply }) => {
           <Button
             variant="contained"
             color="primary"
-            onClick={() => onApply?.(values)}
+            onClick={() => handleApply()}
           >
             Appliquer
           </Button>
         </Stack>
       </Stack>
+
+      {/* Success Snackbar */}
+      <Snackbar
+        open={!!successMessage}
+        autoHideDuration={3000}
+        onClose={() => setSuccessMessage('')}
+      >
+        <Alert onClose={() => setSuccessMessage('')} severity="success">
+          {successMessage}
+        </Alert>
+      </Snackbar>
     </DialogContent>
   );
 };

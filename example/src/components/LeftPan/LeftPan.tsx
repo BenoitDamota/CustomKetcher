@@ -1,17 +1,24 @@
 import KetcherEditor from './KetcherEditor';
 import { LeftPanController } from '../../types/LeftPanController';
-import { useAppContext } from '../../context/AppContext';
 
-export default function LeftPane(props: { isLeftPanReduced: boolean }) {
-  const appCtx = useAppContext();
+interface Props {
+  isLeftPanReduced: boolean;
+  minimizeLeftPan: () => void;
+  expandPanel: (target: 'LEFT' | 'RIGHT') => void;
+}
 
+const LeftPan: React.FC<Props> = ({
+  isLeftPanReduced,
+  minimizeLeftPan,
+  expandPanel,
+}) => {
   const leftPanController: LeftPanController = {
-    minimizeLeftPan: appCtx.minimizeLeftPan,
+    minimizeLeftPan,
   };
 
   return (
     <div style={{ height: '100%' }}>
-      {props.isLeftPanReduced && (
+      {isLeftPanReduced && (
         <button
           style={{
             all: 'unset',
@@ -22,7 +29,7 @@ export default function LeftPane(props: { isLeftPanReduced: boolean }) {
             position: 'relative',
             cursor: 'pointer',
           }}
-          onClick={() => appCtx.expandPanel('LEFT')}
+          onClick={() => expandPanel('LEFT')}
         >
           <span
             className="material-symbols-outlined"
@@ -53,7 +60,7 @@ export default function LeftPane(props: { isLeftPanReduced: boolean }) {
         style={{
           width: '100%',
           height: '100%',
-          display: props.isLeftPanReduced ? 'none' : 'flex',
+          display: isLeftPanReduced ? 'none' : 'flex',
           flexDirection: 'column',
         }}
       >
@@ -61,4 +68,6 @@ export default function LeftPane(props: { isLeftPanReduced: boolean }) {
       </div>
     </div>
   );
-}
+};
+
+export default LeftPan;

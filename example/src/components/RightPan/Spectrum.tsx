@@ -3,7 +3,11 @@ import ReactDOM from 'react-dom';
 import Plot from 'react-plotly.js';
 import MinimizeButton from './MinimizeRightPanButton';
 
-const Spectrum = () => {
+interface Props {
+  minimizeRightPan: () => void;
+}
+
+const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
@@ -54,7 +58,7 @@ const Spectrum = () => {
 
       {isReady &&
         ReactDOM.createPortal(
-          <MinimizeButton />,
+          <MinimizeButton minimizeRightPan={minimizeRightPan} />,
           document.querySelector('.modebar-container') as Element,
         )}
 

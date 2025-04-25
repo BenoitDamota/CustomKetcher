@@ -1,20 +1,22 @@
-import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, useContext, useRef, useState } from 'react';
+import { GeneralSettingsCategoryType } from '../types/GeneralSettingsType';
+import { ModelParametersType } from '../types/ModelParametersType';
+import { mockPredictionParameters } from '../mock/modelParametersData';
+import { mockSettingsCategories } from '../mock/generalSettingsData';
 
-export const MIN_WIDTH_LEFT_PAN = 550;
-export const MIN_WIDTH_RIGHT_PAN = 315;
-
-type ModalName = 'GeneralSettings' | 'About' | 'PredictionSettings' | null;
+type ModalName = 'GeneralSettings' | 'About' | 'PredictionParameters' | null;
 
 type AppContextType = {
   ketcherRef: React.RefObject<unknown>;
   spectreRef: React.RefObject<unknown>;
-  leftWidth: number;
-  isLeftPanReduced: boolean;
-  isRightPanReduced: boolean;
-  setLeftWidth: (width: number) => void;
-  minimizeLeftPan: () => void;
-  minimizeRightPan: () => void;
-  expandPanel: (target: 'LEFT' | 'RIGHT') => void;
+  generalSettings: GeneralSettingsCategoryType[];
+  setGeneralSettings: React.Dispatch<
+    React.SetStateAction<GeneralSettingsCategoryType[]>
+  >;
+  predictionParameters: ModelParametersType[];
+  setPredictionParameters: React.Dispatch<
+    React.SetStateAction<ModelParametersType[]>
+  >;
   openModal: (name: ModalName) => void;
   closeModal: () => void;
   activeModal: ModalName;
@@ -26,70 +28,12 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const ketcherRef = useRef<unknown>(null);
   const spectreRef = useRef<unknown>(null);
 
-  const initialLeftWidth = window.innerWidth / 2;
-  const [leftWidth, setLeftWidth] = useState<number>(initialLeftWidth);
-
-  const [isLeftPanReduced, reduceLeftPan] = useState(false);
-  const [isRightPanReduced, reduceRightPan] = useState(false);
-
-  function minimizeLeftPan() {
-    setLeftWidth(0);
-    reduceLeftPan(true);
-    reduceRightPan(false);
-  }
-
-  function minimizeRightPan() {
-    setLeftWidth(window.innerWidth);
-    reduceRightPan(true);
-    reduceLeftPan(false);
-  }
-
-  useEffect(() => {
-    const handleResize = () => {
-      const newWidth = window.innerWidth;
-
-      // Si les deux panneaux sont affichés
-      if (!isLeftPanReduced && !isRightPanReduced) {
-        const newLeftWidth = newWidth / 2;
-
-        // Vérifie si le leftPanel devient trop petit
-        if (newLeftWidth < MIN_WIDTH_LEFT_PAN) {
-          minimizeLeftPan();
-        } else {
-          setLeftWidth(newLeftWidth);
-        }
-      } else if (isRightPanReduced) {
-        setLeftWidth(newWidth);
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [isLeftPanReduced, isRightPanReduced]);
-
-  function expandPanel(target: 'LEFT' | 'RIGHT') {
-    const totalWidth = window.innerWidth;
-    const desiredLeftWidth = totalWidth / 2;
-
-    if (
-      desiredLeftWidth > MIN_WIDTH_LEFT_PAN &&
-      desiredLeftWidth > MIN_WIDTH_RIGHT_PAN
-    ) {
-      reduceLeftPan(false);
-      reduceRightPan(false);
-      setLeftWidth(desiredLeftWidth);
-    } else {
-      if (target === 'LEFT') {
-        reduceLeftPan(false);
-        reduceRightPan(true);
-        setLeftWidth(totalWidth);
-      } else {
-        reduceRightPan(false);
-        reduceLeftPan(true);
-        setLeftWidth(0);
-      }
-    }
-  }
+  const [generalSettings, setGeneralSettings] = useState<
+    GeneralSettingsCategoryType[]
+  >(mockSettingsCategories);
+  const [predictionParameters, setPredictionParameters] = useState<
+    ModelParametersType[]
+  >(mockPredictionParameters);
 
   const [activeModal, setActiveModal] = useState<ModalName>(null);
 
@@ -103,13 +47,10 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       value={{
         ketcherRef,
         spectreRef,
-        leftWidth,
-        isLeftPanReduced,
-        isRightPanReduced,
-        setLeftWidth,
-        minimizeLeftPan,
-        minimizeRightPan,
-        expandPanel,
+        generalSettings,
+        setGeneralSettings,
+        predictionParameters,
+        setPredictionParameters,
         openModal,
         closeModal,
         activeModal,

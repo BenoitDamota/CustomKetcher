@@ -15,15 +15,14 @@ import {
   Alert,
   Stack,
 } from '@mui/material';
-import { ModelParametersType } from '../../types/ModelParametersType';
-import { ModelParameters } from '../../mock/modelParametersData';
+import { useAppContext } from '../../context/AppContext';
 
 interface Props {
   onClose: () => void;
 }
 
-const PredictionSettingsTemplate: React.FC<Props> = ({ onClose }) => {
-  const modelParams: ModelParametersType[] = ModelParameters;
+const PredictionParametersModalTemplate: React.FC<Props> = ({ onClose }) => {
+  const { predictionParameters, setPredictionParameters } = useAppContext();
 
   const [selectedModel, setSelectedModel] = useState<string>('');
   const [modelValues, setModelValues] = useState<{
@@ -32,9 +31,10 @@ const PredictionSettingsTemplate: React.FC<Props> = ({ onClose }) => {
   const [errorMessages, setErrorMessages] = useState<{
     [key: string]: string;
   }>({});
+  const [successMessage, setSuccessMessage] = useState<string>('');
 
   useEffect(() => {
-    const selectedModelParams = modelParams.find(
+    const selectedModelParams = predictionParameters.find(
       (model) => model.modelName === selectedModel,
     );
 
@@ -58,7 +58,7 @@ const PredictionSettingsTemplate: React.FC<Props> = ({ onClose }) => {
 
       setModelValues(defaultValues);
     }
-  }, [modelParams, selectedModel]);
+  }, [predictionParameters, selectedModel]);
 
   const handleModelChange = (event: SelectChangeEvent<string>) => {
     setSelectedModel(event.target.value);
@@ -75,7 +75,7 @@ const PredictionSettingsTemplate: React.FC<Props> = ({ onClose }) => {
     };
 
   const validateRequiredFields = (): boolean => {
-    const selectedModelParams = modelParams.find(
+    const selectedModelParams = predictionParameters.find(
       (model) => model.modelName === selectedModel,
     );
 
@@ -96,7 +96,7 @@ const PredictionSettingsTemplate: React.FC<Props> = ({ onClose }) => {
     return Object.keys(errors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleApply = () => {
     if (selectedModel === '') {
       setErrorMessages((prevErrors) => ({
         ...prevErrors,
@@ -105,16 +105,32 @@ const PredictionSettingsTemplate: React.FC<Props> = ({ onClose }) => {
       return;
     }
 
-    if (validateRequiredFields()) {
-      console.log('Model Settings:', modelValues);
-      // Logic to save the model settings
+    if (!validateRequiredFields()) {
+      return;
     }
-  };
 
-  // Utiliser useEffect pour observer les changements dans errorMessages
-  useEffect(() => {
-    console.log('Updated errorMessages:', errorMessages);
-  }, [errorMessages]);
+    // Update only the selected model's parameters
+    const updatedModels = predictionParameters.map((model) => {
+      if (model.modelName === selectedModel) {
+        return {
+          ...model,
+          parameters: model.parameters.map((param) => ({
+            ...param,
+            value: modelValues[param.key],
+          })),
+        };
+      }
+      return model;
+    });
+
+    setPredictionParameters(updatedModels);
+
+    setSuccessMessage('Parameters successfully applied');
+    setTimeout(() => {
+      setSuccessMessage('');
+      onClose();
+    }, 2000);
+  };
 
   return (
     <>
@@ -145,7 +161,7 @@ const PredictionSettingsTemplate: React.FC<Props> = ({ onClose }) => {
           <Divider style={{ margin: '1rem 0px', backgroundColor: '#cccccc' }} />
 
           {/* Dynamic Parameters */}
-          {modelParams
+          {predictionParameters
             .find((model) => model.modelName === selectedModel)
             ?.parameters.map((param, index) => {
               const fieldId = `${selectedModel}-${param.key}`;
@@ -223,7 +239,7 @@ const PredictionSettingsTemplate: React.FC<Props> = ({ onClose }) => {
         justifyContent="flex-end"
         sx={{ mt: 3 }}
       >
-        <Button onClick={handleSubmit} color="primary" variant="contained">
+        <Button onClick={handleApply} color="primary" variant="contained">
           Apply
         </Button>
         <Button onClick={onClose} color="secondary" variant="outlined">
@@ -244,8 +260,19 @@ const PredictionSettingsTemplate: React.FC<Props> = ({ onClose }) => {
               Object.values(errorMessages).join(', ')}
         </Alert>
       </Snackbar>
+
+      {/* Success Snackbar */}
+      <Snackbar
+        open={!!successMessage} // Show if there is a success message
+        autoHideDuration={6000}
+        onClose={() => setSuccessMessage('')} // Clear the success message after close
+      >
+        <Alert onClose={() => setSuccessMessage('')} severity="success">
+          {successMessage}
+        </Alert>
+      </Snackbar>
     </>
   );
 };
 
-export default PredictionSettingsTemplate;
+export default PredictionParametersModalTemplate;
