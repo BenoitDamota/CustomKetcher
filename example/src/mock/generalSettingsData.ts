@@ -1,14 +1,15 @@
-import { Category } from '../types/settingsTypes';
+import { GeneralSettingsCategoryType } from '../types/GeneralSettingsType';
 
-export const mockSettingsCategories: Category[] = [
+export const mockSettingsCategories: GeneralSettingsCategoryType[] = [
   {
-    categoryName: 'General',
+    settingsCategoryName: 'General',
     settings: [
       {
         key: 'maxRetries',
         label: 'Maximum Retries',
         type: 'number',
         default: 3,
+        value: 8,
       },
       {
         key: 'theme',
@@ -22,11 +23,12 @@ export const mockSettingsCategories: Category[] = [
         label: 'Enable Feature X',
         type: 'boolean',
         default: true,
+        value: false,
       },
     ],
   },
   {
-    categoryName: 'Notifications',
+    settingsCategoryName: 'Notifications',
     settings: [
       {
         key: 'emailNotifications',

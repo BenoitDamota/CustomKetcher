@@ -1,6 +1,4 @@
-// src/components/SettingsModalTemplate.tsx
-
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   Accordion,
   AccordionSummary,
@@ -18,8 +16,11 @@ import {
   Typography,
   FormControlLabel,
 } from '@mui/material';
-import { Category, Setting } from '../../types/settingsTypes';
-import { mockSettingsCategories } from '../../mock/settingsData'; // Import mock data
+import {
+  GeneralSettingsCategoryType,
+  GeneralSettingType,
+} from '../../types/GeneralSettingsType';
+import { mockSettingsCategories } from '../../mock/generalSettingsData'; // Import mock data
 
 interface Props {
   onClose: () => void;
@@ -27,25 +28,42 @@ interface Props {
 }
 
 const SettingsModalTemplate: React.FC<Props> = ({ onClose, onApply }) => {
-  const categories: Category[] = mockSettingsCategories;
+  const generalSettingsCatergories: GeneralSettingsCategoryType[] =
+    mockSettingsCategories;
 
+  // Init values with stocked values or default
   const [values, setValues] = useState<
     Record<string, string | number | boolean>
   >(() => {
     const initial: Record<string, string | number | boolean> = {};
-    categories.forEach((category) =>
+    generalSettingsCatergories.forEach((category) =>
       category.settings.forEach((setting) => {
-        initial[setting.key] = setting.default;
+        initial[setting.key] =
+          setting.value !== undefined ? setting.value : setting.default;
+        console.log(setting.key, setting.value, setting.default);
       }),
     );
     return initial;
   });
 
+  // Function to handle settings changes
   const handleChange = (key: string, value: string | number | boolean) => {
     setValues((prev) => ({ ...prev, [key]: value }));
   };
 
-  const renderField = (setting: Setting) => {
+  // Function to reset the all settings to default values
+  const handleResetToDefault = () => {
+    const initial: Record<string, string | number | boolean> = {};
+    generalSettingsCatergories.forEach((category) =>
+      category.settings.forEach((setting) => {
+        initial[setting.key] = setting.default;
+      }),
+    );
+    setValues(initial);
+  };
+
+  // Dynamic render of the fields according to their types
+  const renderField = (setting: GeneralSettingType) => {
     const label = setting.label || setting.key;
 
     switch (setting.type) {
@@ -67,7 +85,7 @@ const SettingsModalTemplate: React.FC<Props> = ({ onClose, onApply }) => {
           <FormControlLabel
             control={
               <Switch
-                checked={values[setting.key] as boolean} // Explicitly cast to boolean
+                checked={values[setting.key] as boolean}
                 onChange={(e) => handleChange(setting.key, e.target.checked)}
               />
             }
@@ -80,7 +98,7 @@ const SettingsModalTemplate: React.FC<Props> = ({ onClose, onApply }) => {
           <FormControl fullWidth margin="normal">
             <InputLabel>{label}</InputLabel>
             <Select
-              value={values[setting.key] as string} // Explicitly cast to string
+              value={values[setting.key] as string}
               label={label}
               onChange={(e) => handleChange(setting.key, e.target.value)}
             >
@@ -104,8 +122,8 @@ const SettingsModalTemplate: React.FC<Props> = ({ onClose, onApply }) => {
         <strong>General Settings</strong>
       </DialogContentText>
       <br />
-      {categories.map((category) => (
-        <Accordion key={category.categoryName}>
+      {generalSettingsCatergories.map((category) => (
+        <Accordion key={category.settingsCategoryName}>
           <AccordionSummary
             expandIcon={
               <span className="material-symbols-outlined">
@@ -113,7 +131,7 @@ const SettingsModalTemplate: React.FC<Props> = ({ onClose, onApply }) => {
               </span>
             }
           >
-            <Typography>{category.categoryName}</Typography>
+            <Typography>{category.settingsCategoryName}</Typography>
           </AccordionSummary>
           <AccordionDetails>
             {category.settings.map((setting) => (
@@ -126,19 +144,24 @@ const SettingsModalTemplate: React.FC<Props> = ({ onClose, onApply }) => {
       <Stack
         direction="row"
         spacing={2}
-        justifyContent="flex-end"
+        justifyContent="space-between"
         sx={{ mt: 3 }}
       >
-        <Button variant="outlined" onClick={onClose}>
-          Annuler
+        <Button variant="text" color="primary" onClick={handleResetToDefault}>
+          Reset To Default
         </Button>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => onApply?.(values)}
-        >
-          Appliquer
-        </Button>
+        <Stack direction="row-reverse" spacing={2} justifyContent="flex-end">
+          <Button variant="outlined" color="secondary" onClick={onClose}>
+            Annuler
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => onApply?.(values)}
+          >
+            Appliquer
+          </Button>
+        </Stack>
       </Stack>
     </DialogContent>
   );

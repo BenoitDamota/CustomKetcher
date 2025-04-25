@@ -13,6 +13,7 @@ import {
   FormControlLabel,
   Snackbar,
   Alert,
+  Stack,
 } from '@mui/material';
 import { ModelParametersType } from '../../types/ModelParametersType';
 import { ModelParameters } from '../../mock/modelParametersData';
@@ -44,7 +45,12 @@ const PredictionSettingsTemplate: React.FC<Props> = ({ onClose }) => {
 
       selectedModelParams.parameters.forEach((param) => {
         if (param.type === 'boolean') {
-          defaultValues[param.key] = param.value || param.default || false;
+          defaultValues[param.key] =
+            param.value !== undefined
+              ? param.value
+              : param.default !== undefined
+              ? param.default
+              : false;
         } else {
           defaultValues[param.key] = param.value || param.default || undefined;
         }
@@ -120,12 +126,13 @@ const PredictionSettingsTemplate: React.FC<Props> = ({ onClose }) => {
       <FormControl fullWidth margin="normal">
         <InputLabel id="model-select-label">
           Choose A Prediction Model
+          <span style={{ color: 'red', verticalAlign: 'middle' }}>{' *'}</span>
         </InputLabel>
         <Select
           labelId="model-select-label"
           id="model-select"
           value={selectedModel}
-          label="Choose Prediction A Model"
+          label="Choose Prediction A Model *"
           onChange={handleModelChange}
         >
           <MenuItem value="modelA">Model A</MenuItem>
@@ -149,13 +156,28 @@ const PredictionSettingsTemplate: React.FC<Props> = ({ onClose }) => {
                     key={index}
                     control={
                       <Switch
-                        checked={(modelValues[param.key] as boolean) || false}
+                        checked={
+                          (modelValues[param.key] as boolean) !== undefined
+                            ? (modelValues[param.key] as boolean)
+                            : false
+                        }
                         onChange={handleSwitchChange(param.key)}
                         name={param.key}
                         color="primary"
                       />
                     }
-                    label={param.label}
+                    label={
+                      <>
+                        {param.label}
+                        {param.required && (
+                          <span
+                            style={{ color: 'red', verticalAlign: 'middle' }}
+                          >
+                            {' *'}
+                          </span>
+                        )}
+                      </>
+                    }
                   />
                 );
               } else {
@@ -163,14 +185,27 @@ const PredictionSettingsTemplate: React.FC<Props> = ({ onClose }) => {
                   <TextField
                     key={index}
                     id={fieldId}
-                    label={param.label}
+                    label={
+                      <>
+                        {param.label}
+                        {param.required && (
+                          <span
+                            style={{ color: 'red', verticalAlign: 'middle' }}
+                          >
+                            {' *'}
+                          </span>
+                        )}
+                      </>
+                    }
                     type={param.type}
                     value={modelValues[param.key] || ''}
                     onChange={handleInputChange(param.key)}
                     fullWidth
                     margin="normal"
                     error={!!errorMessage} // Show error if there's an error for this field
-                    helperText={errorMessage || ''}
+                    helperText={
+                      errorMessage ? `Fil the field : ${errorMessage}` : ''
+                    }
                   />
                 );
               }
@@ -181,12 +216,12 @@ const PredictionSettingsTemplate: React.FC<Props> = ({ onClose }) => {
       <Divider style={{ margin: '1rem 0px', backgroundColor: '#cccccc' }} />
 
       {/* Submit and Close Buttons */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          gap: '16px',
-        }}
+      <Stack
+        display={'flex'}
+        direction="row"
+        spacing={'16px'}
+        justifyContent="flex-end"
+        sx={{ mt: 3 }}
       >
         <Button onClick={handleSubmit} color="primary" variant="contained">
           Apply
@@ -194,7 +229,7 @@ const PredictionSettingsTemplate: React.FC<Props> = ({ onClose }) => {
         <Button onClick={onClose} color="secondary" variant="outlined">
           Cancel
         </Button>
-      </div>
+      </Stack>
 
       {/* Error Snackbar */}
       <Snackbar

@@ -3,7 +3,7 @@ import { useAppContext } from '../context/AppContext';
 import ModalTemplate from './ModalTemplate';
 import GeneralSettingsModalTemplate from './templates/GeneralSettingsModalTemplate';
 import AboutModalTemplate from './templates/AboutModalTemplate';
-import PredictionSettingsTemplate from './templates/PredictionSettingsTemplate';
+import PredictionSettingsTemplate from './templates/PredictionSettingsModalTemplate';
 
 const ModalRenderer: React.FC = () => {
   const { activeModal, closeModal } = useAppContext();
