@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../../context/AppContext';
 import ModalTemplate from './ModalTemplate';
 import GeneralSettingsModalTemplate from './templates/GeneralSettingsModalTemplate';
 import AboutModalTemplate from './templates/AboutModalTemplate';

@@ -17,6 +17,10 @@ type AppContextType = {
   setPredictionParameters: React.Dispatch<
     React.SetStateAction<ModelParametersType[]>
   >;
+  openAlert: React.MutableRefObject<(title: string, content: string) => void>;
+  openConfirm: React.MutableRefObject<
+    (title: string, content: string, onConfirm: () => void) => void
+  >;
   openModal: (name: ModalName) => void;
   closeModal: () => void;
   activeModal: ModalName;
@@ -27,6 +31,15 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const ketcherRef = useRef<unknown>(null);
   const spectreRef = useRef<unknown>(null);
+
+  const openAlert = useRef<(title: string, content: string) => void>(() => {
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+  });
+  const openConfirm = useRef<
+    (title: string, content: string, onConfirm: () => void) => void
+  >(() => {
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+  });
 
   const [generalSettings, setGeneralSettings] = useState<
     GeneralSettingsCategoryType[]
@@ -51,6 +64,8 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         setGeneralSettings,
         predictionParameters,
         setPredictionParameters,
+        openAlert,
+        openConfirm,
         openModal,
         closeModal,
         activeModal,

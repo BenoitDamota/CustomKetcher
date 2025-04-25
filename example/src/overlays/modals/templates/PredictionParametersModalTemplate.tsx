@@ -15,7 +15,7 @@ import {
   Alert,
   Stack,
 } from '@mui/material';
-import { useAppContext } from '../../context/AppContext';
+import { useAppContext } from '../../../context/AppContext';
 
 interface Props {
   onClose: () => void;

@@ -4,47 +4,50 @@ import InputBarSMILES from './InputBarSmiles';
 import { useAppContext } from '../../context/AppContext';
 
 export default function Toolbar() {
-  const appCtx = useAppContext();
+  const { openAlert, openConfirm, openModal } = useAppContext();
 
   const [inputSmilesBar, setInputSmilesBar] = useState('');
 
   function handlePrediction() {
     if (inputSmilesBar) {
-      // eslint-disable-next-line no-alert
-      const conf = confirm(
-        'Une molécule est renseignée dans la barre de SMILES. Souhaitez-vous lancer la prédiction à partir de celle-ci ?',
+      openConfirm.current(
+        'Confirmation',
+        'A molecule is entered in the SMILES bar. Do you want to start the prediction based on this molecule?',
+        () => {
+          openAlert.current(
+            'Prediction Started',
+            `Starting prediction with: ${inputSmilesBar}`,
+          );
+        },
       );
-
-      if (conf) {
-        // eslint-disable-next-line no-alert
-        alert('Lancement de la prédiction avec : ' + inputSmilesBar);
-      }
     } else {
       if (window.ketcher) {
-        window.ketcher.getSmiles(false).then((SMILES) => {
+        window.ketcher.getSmiles(false).then((SMILES: string) => {
           if (SMILES) {
-            // eslint-disable-next-line no-alert
-            alert('Lancement de la prédiction sur : ' + SMILES);
+            openAlert.current(
+              'Prediction Started',
+              `Starting prediction with: ${SMILES}`,
+            );
           } else {
-            // eslint-disable-next-line no-alert
-            alert("Aucune molécule n'est déssinée");
+            openAlert.current('Error', 'No molecule is drawn.');
           }
         });
       } else {
-        // eslint-disable-next-line no-alert
-        alert('Ketcher n’est pas disponible.');
+        openAlert.current('Error', 'Ketcher is not available.');
       }
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
   function handleLoad() {
-    // eslint-disable-next-line no-alert
-    alert('Load');
+    openAlert.current('Loading', 'Loading file...');
   }
+
   function handleExport() {
-    // eslint-disable-next-line no-alert
-    alert('Export');
+    openAlert.current('Exporting', 'Exporting data...');
+  }
+
+  function handleSaveAs() {
+    openAlert.current('Save', 'Saving file...');
   }
 
   return (
@@ -92,10 +95,7 @@ export default function Toolbar() {
           </button>
           <button
             title="Save As"
-            onClick={() => {
-              // eslint-disable-next-line no-alert
-              alert('save');
-            }}
+            onClick={() => handleSaveAs()}
             className="material-symbols-outlined"
           >
             save_as
@@ -103,7 +103,7 @@ export default function Toolbar() {
           <button
             title="Export"
             className="material-symbols-outlined"
-            onClick={() => handleExport}
+            onClick={() => handleExport()}
           >
             file_export
           </button>
@@ -134,7 +134,7 @@ export default function Toolbar() {
         <InputBarSMILES input={inputSmilesBar} setInput={setInputSmilesBar} />
         <button
           title="Prediction Settings"
-          onClick={() => appCtx.openModal('PredictionParameters')}
+          onClick={() => openModal('PredictionParameters')}
           className="material-symbols-outlined"
         >
           manufacturing
@@ -152,7 +152,7 @@ export default function Toolbar() {
       >
         <button
           title="General Settings"
-          onClick={() => appCtx.openModal('GeneralSettings')}
+          onClick={() => openModal('GeneralSettings')}
           className="material-symbols-outlined"
         >
           settings
@@ -168,7 +168,7 @@ export default function Toolbar() {
         </button>
         <button
           title="About The App"
-          onClick={() => appCtx.openModal('About')}
+          onClick={() => openModal('About')}
           className="material-symbols-outlined"
         >
           info

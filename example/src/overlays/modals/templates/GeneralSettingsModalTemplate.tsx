@@ -18,8 +18,8 @@ import {
   Snackbar,
   Alert,
 } from '@mui/material';
-import { GeneralSettingType } from '../../types/GeneralSettingsType';
-import { useAppContext } from '../../context/AppContext';
+import { GeneralSettingType } from '../../../types/GeneralSettingsType';
+import { useAppContext } from '../../../context/AppContext';
 
 interface Props {
   onClose: () => void;

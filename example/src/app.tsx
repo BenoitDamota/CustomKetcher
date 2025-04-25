@@ -1,11 +1,11 @@
 import { AppProvider } from './context/AppContext';
 import ResizableLayout from './components/ResizableLayout';
 import Toolbar from './components/TopToolBar/Toolbar';
-import ModalRenderer from './modals/ModalRenderer';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
 
 import './style/style.css';
+import Overlays from './overlays/Overlays';
 
 const theme = createTheme({
   palette: {
@@ -24,7 +24,7 @@ function App() {
       <AppProvider>
         <ThemeProvider theme={theme}>
           <CssBaseline />
-          <ModalRenderer />
+          <Overlays />
           <div
             style={{
               display: 'flex',
