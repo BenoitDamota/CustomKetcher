@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Dialog, DialogTitle, DialogContent } from '@mui/material';
 
 interface ModalTemplateProps {
@@ -7,11 +7,20 @@ interface ModalTemplateProps {
 }
 
 const ModalTemplate: React.FC<ModalTemplateProps> = ({ children, onClose }) => {
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const customOnClose = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    onClose();
+  };
+
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open onClose={customOnClose} fullWidth maxWidth="sm">
       <DialogTitle>
         <button
-          onClick={onClose}
+          onClick={customOnClose}
           className="material-symbols-outlined hover-red"
           style={{
             fontSize: '1.5rem',
@@ -27,7 +36,11 @@ const ModalTemplate: React.FC<ModalTemplateProps> = ({ children, onClose }) => {
         </button>
         {/* Titre dynamique ajouté ici */}
       </DialogTitle>
-      <DialogContent>{children}</DialogContent>
+      <DialogContent>
+        {React.cloneElement(children as React.ReactElement, {
+          timeoutRef,
+        })}
+      </DialogContent>
     </Dialog>
   );
 };

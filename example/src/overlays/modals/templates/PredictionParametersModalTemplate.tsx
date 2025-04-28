@@ -19,9 +19,13 @@ import { useAppContext } from '../../../context/AppContext';
 
 interface Props {
   onClose: () => void;
+  timeoutRef?: React.MutableRefObject<NodeJS.Timeout | null>;
 }
 
-const PredictionParametersModalTemplate: React.FC<Props> = ({ onClose }) => {
+const PredictionParametersModalTemplate: React.FC<Props> = ({
+  onClose,
+  timeoutRef,
+}) => {
   const { predictionParameters, setPredictionParameters } = useAppContext();
 
   const [selectedModel, setSelectedModel] = useState<string>('');
@@ -126,10 +130,21 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({ onClose }) => {
     setPredictionParameters(updatedModels);
 
     setSuccessMessage('Parameters successfully applied');
-    setTimeout(() => {
-      setSuccessMessage('');
-      onClose();
-    }, 2000);
+
+    if (timeoutRef) {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => {
+        setSuccessMessage('');
+        onClose();
+      }, 3000);
+    }
+  };
+
+  const customOnClose = () => {
+    if (timeoutRef) {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    }
+    onClose();
   };
 
   return (
@@ -165,7 +180,7 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({ onClose }) => {
             .find((model) => model.modelName === selectedModel)
             ?.parameters.map((param, index) => {
               const fieldId = `${selectedModel}-${param.key}`;
-              const errorMessage = errorMessages[param.key]; // Get specific error for the field
+              const errorMessage = errorMessages[param.key];
               if (param.type === 'boolean') {
                 return (
                   <FormControlLabel
@@ -218,7 +233,7 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({ onClose }) => {
                     onChange={handleInputChange(param.key)}
                     fullWidth
                     margin="normal"
-                    error={!!errorMessage} // Show error if there's an error for this field
+                    error={!!errorMessage}
                     helperText={
                       errorMessage ? `Fil the field : ${errorMessage}` : ''
                     }
@@ -242,16 +257,16 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({ onClose }) => {
         <Button onClick={handleApply} color="primary" variant="contained">
           Apply
         </Button>
-        <Button onClick={onClose} color="secondary" variant="outlined">
+        <Button onClick={customOnClose} color="secondary" variant="outlined">
           Cancel
         </Button>
       </Stack>
 
       {/* Error Snackbar */}
       <Snackbar
-        open={Object.keys(errorMessages).length > 0} // Only show if there are errors
+        open={Object.keys(errorMessages).length > 0}
         autoHideDuration={6000}
-        onClose={() => setErrorMessages({})} // Close the error when the snackbar closes
+        onClose={() => setErrorMessages({})}
       >
         <Alert onClose={() => setErrorMessages({})} severity="error">
           {errorMessages.noModel
@@ -262,15 +277,17 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({ onClose }) => {
       </Snackbar>
 
       {/* Success Snackbar */}
-      <Snackbar
-        open={!!successMessage} // Show if there is a success message
-        autoHideDuration={6000}
-        onClose={() => setSuccessMessage('')} // Clear the success message after close
-      >
-        <Alert onClose={() => setSuccessMessage('')} severity="success">
-          {successMessage}
-        </Alert>
-      </Snackbar>
+      {successMessage && (
+        <Snackbar
+          open={!!successMessage}
+          autoHideDuration={3500}
+          onClose={() => setSuccessMessage('')}
+        >
+          <Alert onClose={() => setSuccessMessage('')} severity="success">
+            {successMessage}
+          </Alert>
+        </Snackbar>
+      )}
     </>
   );
 };

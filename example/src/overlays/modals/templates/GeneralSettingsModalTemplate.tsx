@@ -23,9 +23,10 @@ import { useAppContext } from '../../../context/AppContext';
 
 interface Props {
   onClose: () => void;
+  timeoutRef?: React.MutableRefObject<NodeJS.Timeout | null>;
 }
 
-const SettingsModalTemplate: React.FC<Props> = ({ onClose }) => {
+const SettingsModalTemplate: React.FC<Props> = ({ onClose, timeoutRef }) => {
   const { generalSettings, setGeneralSettings } = useAppContext();
 
   const [successMessage, setSuccessMessage] = useState<string>('');
@@ -39,7 +40,6 @@ const SettingsModalTemplate: React.FC<Props> = ({ onClose }) => {
       category.settings.forEach((setting) => {
         initial[setting.key] =
           setting.value !== undefined ? setting.value : setting.default;
-        console.log(setting.key, setting.value, setting.default);
       }),
     );
     return initial;
@@ -73,10 +73,21 @@ const SettingsModalTemplate: React.FC<Props> = ({ onClose }) => {
     setGeneralSettings(updatedCategories);
 
     setSuccessMessage('Settings successfully applied');
-    setTimeout(() => {
-      setSuccessMessage('');
-      onClose();
-    }, 3000);
+
+    if (timeoutRef) {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => {
+        setSuccessMessage('');
+        onClose();
+      }, 3000);
+    }
+  };
+
+  const customOnClose = () => {
+    if (timeoutRef) {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    }
+    onClose();
   };
 
   // Dynamic render of the fields according to their types
@@ -168,29 +179,27 @@ const SettingsModalTemplate: React.FC<Props> = ({ onClose }) => {
           Reset To Default
         </Button>
         <Stack direction="row-reverse" spacing={2} justifyContent="flex-end">
-          <Button variant="outlined" color="secondary" onClick={onClose}>
+          <Button variant="outlined" color="secondary" onClick={customOnClose}>
             Annuler
           </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => handleApply()}
-          >
+          <Button variant="contained" color="primary" onClick={handleApply}>
             Appliquer
           </Button>
         </Stack>
       </Stack>
 
       {/* Success Snackbar */}
-      <Snackbar
-        open={!!successMessage}
-        autoHideDuration={3000}
-        onClose={() => setSuccessMessage('')}
-      >
-        <Alert onClose={() => setSuccessMessage('')} severity="success">
-          {successMessage}
-        </Alert>
-      </Snackbar>
+      {successMessage && (
+        <Snackbar
+          open={!!successMessage}
+          autoHideDuration={3500}
+          onClose={() => setSuccessMessage('')}
+        >
+          <Alert onClose={() => setSuccessMessage('')} severity="success">
+            {successMessage}
+          </Alert>
+        </Snackbar>
+      )}
     </DialogContent>
   );
 };
