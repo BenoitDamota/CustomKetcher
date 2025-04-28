@@ -1,59 +1,231 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
 import Plot from 'react-plotly.js';
 import MinimizeButton from './MinimizeRightPanButton';
+import mockData from '../../mock/predicteSpectrumData.json';
+import { useAppContext } from '../../context/AppContext';
+
+interface PlotlyHTMLElementWithFullLayout extends Plotly.PlotlyHTMLElement {
+  _fullLayout: Plotly.Layout & {
+    xaxis: {
+      _offset: number;
+      _length: number;
+      p2c: (px: number) => number;
+    };
+    yaxis: {
+      _offset: number;
+      _length: number;
+      p2c: (px: number) => number;
+    };
+  };
+}
 
 interface Props {
   minimizeRightPan: () => void;
 }
 
-const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
-  const [isReady, setIsReady] = useState(false);
+type DataPoint = {
+  ppm: number;
+  intensity: number;
+  atomID: number[];
+};
 
+type Region = {
+  atomIds: number[];
+  ppmMin: number;
+  ppmMax: number;
+  intensityMax: number;
+};
+
+const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
+  const { openAlert } = useAppContext();
+
+  const [isReady, setIsReady] = useState(false);
+  const [regions, setRegions] = useState<Region[]>([]);
+  const spectrumData = (mockData as DataPoint[]).sort((a, b) => b.ppm - a.ppm);
+
+  // Regrouper les données selon atomID
+  useEffect(() => {
+    const grouped = new Map<string, DataPoint[]>();
+
+    spectrumData.forEach((point) => {
+      const key = point.atomID?.sort((a, b) => a - b).join(',') || '';
+      if (!key) return;
+      if (!grouped.has(key)) grouped.set(key, []);
+      grouped.get(key)?.push(point);
+    });
+
+    const regionList: Region[] = [];
+    grouped.forEach((group) => {
+      const ppms = group.map((p) => p.ppm);
+      const intensities = group.map((p) => p.intensity);
+      regionList.push({
+        atomIds: group[0].atomID,
+        ppmMin: Math.min(...ppms),
+        ppmMax: Math.max(...ppms),
+        intensityMax: Math.max(...intensities),
+      });
+    });
+
+    setRegions(regionList);
+  }, [spectrumData]);
+
+  // Observer that detect when the modebar-container is ready for modification
   useEffect(() => {
     const observer = new MutationObserver(() => {
       const modebarContainer = document.querySelector('.modebar-container');
       if (modebarContainer) {
         setIsReady(true);
-        observer.disconnect(); // Stoppe l'observation une fois que l'élément est trouvé
+        observer.disconnect();
       }
     });
 
-    // Démarre l'observation sur tout le body
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-    });
-
-    return () => {
-      observer.disconnect();
-    };
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
   }, []);
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const plotInstanceRef = useRef<Plotly.PlotlyHTMLElement | null>(null);
+
+  const handlePlotReady = (
+    _: unknown,
+    graphDiv: Plotly.PlotlyHTMLElement | null,
+  ) => {
+    plotInstanceRef.current = graphDiv;
+  };
+
+  const [layout, _] = useState({
+    autosize: true,
+    margin: { t: 50, r: 40, b: 40, l: 40 },
+    responsive: true,
+    xaxis: {
+      title: 'ppm',
+      autorange: 'reversed', // Axe ppm en décroissant
+    },
+    yaxis: {
+      title: 'Intensity',
+    },
+    showlegend: false,
+  });
+
+  // Detection of clicks everywhere on the pyplot instead of the default click on points only
+  useEffect(() => {
+    const plotDiv = containerRef.current?.querySelector(
+      '.js-plotly-plot',
+    ) as HTMLDivElement | null;
+
+    if (!plotDiv) {
+      console.warn('Plotly div not ready');
+      return;
+    }
+
+    const handleClick = (e: MouseEvent) => {
+      if (!plotInstanceRef.current) return;
+
+      const bbox = plotDiv.getBoundingClientRect();
+      const xPx = e.clientX - bbox.left;
+      const yPx = e.clientY - bbox.top;
+
+      const fullLayout = (
+        plotInstanceRef.current as PlotlyHTMLElementWithFullLayout
+      )._fullLayout;
+
+      const xaxis = fullLayout.xaxis;
+      const yaxis = fullLayout.yaxis;
+
+      const inPlotArea =
+        xPx >= xaxis._offset &&
+        xPx <= xaxis._offset + xaxis._length &&
+        yPx >= yaxis._offset &&
+        yPx <= yaxis._offset + yaxis._length;
+
+      if (inPlotArea) {
+        const xCoord = xaxis.p2c(xPx - xaxis._offset);
+
+        // Find the region with the nearest center (x only) of the click
+        let closestRegion = null;
+        let closestDistance = Infinity;
+
+        for (const region of regions) {
+          const regionCenter = (region.ppmMin + region.ppmMax) / 2;
+          const distance = Math.abs(xCoord - regionCenter);
+
+          if (distance < closestDistance) {
+            closestDistance = distance;
+            closestRegion = region;
+          }
+        }
+
+        if (closestRegion) {
+          openAlert.current(
+            'Associated atoms',
+            closestRegion.atomIds.join(','),
+          );
+
+          // Zoom on this region
+          const margin = 0.5;
+
+          Plotly.relayout(plotInstanceRef.current, {
+            xaxis: {
+              range: [
+                closestRegion.ppmMax + margin,
+                closestRegion.ppmMin - margin,
+              ],
+            },
+            yaxis: {
+              range: [
+                0,
+                closestRegion.intensityMax + closestRegion.intensityMax * 0.05,
+              ],
+            },
+          });
+        } else {
+          openAlert.current('No region found', '');
+        }
+      }
+    };
+
+    plotDiv.addEventListener('click', handleClick);
+
+    return () => {
+      plotDiv.removeEventListener('click', handleClick);
+    };
+  }, [openAlert, regions]);
+
   return (
-    <div style={{ height: '100%' }}>
+    <div ref={containerRef} style={{ height: '100%' }}>
       <Plot
         data={[
           {
-            x: [1, 2, 3, 4],
-            y: [10, 15, 13, 17],
+            x: spectrumData.map((d) => d.ppm),
+            y: spectrumData.map((d) => d.intensity),
             type: 'scatter',
-            mode: 'lines+markers',
-            marker: { color: 'red' },
+            mode: 'lines',
+            line: { color: '#167782' },
+            name: 'NMR Spectrum',
           },
+          ...regions.map((region, i) => ({
+            x: [region.ppmMin, region.ppmMax, region.ppmMax, region.ppmMin],
+            y: [0, 0, region.intensityMax, region.intensityMax],
+            type: 'scatter',
+            fill: 'toself',
+            fillcolor: `rgba(22, 119, 130, 0.2)`,
+            line: { width: 0 },
+            hoverinfo: 'skip',
+            name: `Region ${i + 1}`,
+            customdata: [region.atomIds],
+          })),
         ]}
-        layout={{
-          autosize: true,
-          margin: { t: 50, r: 40, b: 40, l: 40 },
-          responsive: true,
-        }}
+        layout={layout}
         config={{
-          displayModeBar: true, // Active la mode bar
-          displaylogo: false, // Cache le logo Plotly
+          displayModeBar: true,
+          displaylogo: false,
           responsive: true,
         }}
         style={{ width: '100%', height: '100%' }}
         useResizeHandler={true}
+        onInitialized={handlePlotReady}
+        onUpdate={handlePlotReady}
       />
 
       {isReady &&
@@ -62,8 +234,8 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
           document.querySelector('.modebar-container') as Element,
         )}
 
+      {/* Custom UI style */}
       <style>{`
-        /* New style for Plotly modebar */
         .modebar-container {
           display: flex;
           flex-direction: row;
@@ -83,7 +255,7 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
           font-size: 18px;
         }
 
-        .js-plotly-plot .plotly .modebar .modebar-btn > svg > path{
+        .js-plotly-plot .plotly .modebar .modebar-btn > svg > path {
           fill: #333 !important;
         }
 
