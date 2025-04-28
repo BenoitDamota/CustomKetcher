@@ -1,3 +1,4 @@
+import { MINIMIZED_BAR_WIDTH } from '../ResizableLayout';
 import Spectrum from './Spectrum';
 
 interface Props {
@@ -17,7 +18,7 @@ const RightPan: React.FC<Props> = ({
         <button
           style={{
             all: 'unset',
-            width: '30px',
+            width: `${MINIMIZED_BAR_WIDTH}px`,
             height: '100%',
             backgroundColor: '#525252',
             color: 'white',

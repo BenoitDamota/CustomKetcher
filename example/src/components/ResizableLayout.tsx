@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import LeftPane from './LeftPan/LeftPan';
 import RightPan from './RightPan/RightPan';
 
 export const MIN_WIDTH_LEFT_PAN = 550;
-export const MIN_WIDTH_RIGHT_PAN = 315;
+export const RESIZE_BAR_WIDTH = 6;
+export const MIN_WIDTH_RIGHT_PAN = 350;
+export const MINIMIZED_BAR_WIDTH = 30;
 
 export default function ResizableLayout() {
   const initialLeftWidth = window.innerWidth / 2;
@@ -15,6 +17,55 @@ export default function ResizableLayout() {
   const isResizingRef = useRef(false);
 
   const aPanIsReduced = isLeftPanReduced || isRightPanReduced;
+
+  const adjustPanel = useCallback(() => {
+    const totalWidth = window.innerWidth;
+    if (!isLeftPanReduced && !isRightPanReduced) {
+      if (
+        totalWidth >=
+        MIN_WIDTH_LEFT_PAN + MIN_WIDTH_RIGHT_PAN + RESIZE_BAR_WIDTH
+      ) {
+        const desiredLeftWidth =
+          MIN_WIDTH_LEFT_PAN +
+          (totalWidth -
+            (RESIZE_BAR_WIDTH + MIN_WIDTH_LEFT_PAN + MIN_WIDTH_RIGHT_PAN)) /
+            2;
+
+        reduceLeftPan(false);
+        reduceRightPan(false);
+        setLeftWidth(desiredLeftWidth);
+      } else {
+        if (totalWidth >= MIN_WIDTH_LEFT_PAN + MINIMIZED_BAR_WIDTH) {
+          reduceLeftPan(false);
+          reduceRightPan(true);
+          setLeftWidth(totalWidth);
+        } else {
+          reduceRightPan(false);
+          reduceLeftPan(true);
+          setLeftWidth(0);
+        }
+      }
+    } else {
+      if (isLeftPanReduced) {
+        setLeftWidth(0);
+      } else {
+        setLeftWidth(totalWidth - MINIMIZED_BAR_WIDTH);
+      }
+    }
+  }, [isLeftPanReduced, isRightPanReduced]);
+
+  useEffect(() => {
+    adjustPanel();
+  }, [adjustPanel]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      adjustPanel();
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [adjustPanel]);
 
   function minimizeLeftPan() {
     setLeftWidth(0);
@@ -28,37 +79,19 @@ export default function ResizableLayout() {
     reduceLeftPan(false);
   }
 
-  useEffect(() => {
-    const handleResize = () => {
-      const newWidth = window.innerWidth;
-
-      // Si les deux panneaux sont affichés
-      if (!isLeftPanReduced && !isRightPanReduced) {
-        const newLeftWidth = newWidth / 2;
-
-        // Vérifie si le leftPanel devient trop petit
-        if (newLeftWidth < MIN_WIDTH_LEFT_PAN) {
-          minimizeLeftPan();
-        } else {
-          setLeftWidth(newLeftWidth);
-        }
-      } else if (isRightPanReduced) {
-        setLeftWidth(newWidth);
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [isLeftPanReduced, isRightPanReduced]);
-
   function expandPanel(target: 'LEFT' | 'RIGHT') {
     const totalWidth = window.innerWidth;
-    const desiredLeftWidth = totalWidth / 2;
 
     if (
-      desiredLeftWidth > MIN_WIDTH_LEFT_PAN &&
-      desiredLeftWidth > MIN_WIDTH_RIGHT_PAN
+      totalWidth >=
+      MIN_WIDTH_LEFT_PAN + MIN_WIDTH_RIGHT_PAN + RESIZE_BAR_WIDTH
     ) {
+      const desiredLeftWidth =
+        MIN_WIDTH_LEFT_PAN +
+        (totalWidth -
+          (RESIZE_BAR_WIDTH + MIN_WIDTH_LEFT_PAN + MIN_WIDTH_RIGHT_PAN)) /
+          2;
+
       reduceLeftPan(false);
       reduceRightPan(false);
       setLeftWidth(desiredLeftWidth);
@@ -86,7 +119,7 @@ export default function ResizableLayout() {
     const newWidth = e.clientX;
     if (
       newWidth > MIN_WIDTH_LEFT_PAN &&
-      newWidth < window.innerWidth - MIN_WIDTH_RIGHT_PAN
+      newWidth < window.innerWidth - RESIZE_BAR_WIDTH - MIN_WIDTH_RIGHT_PAN
     ) {
       setLeftWidth(newWidth);
     }
@@ -121,10 +154,10 @@ export default function ResizableLayout() {
           role="separator"
           aria-hidden="true"
           style={{
-            width: 6,
+            width: RESIZE_BAR_WIDTH,
             cursor: 'col-resize',
             background: '#525252',
-            zIndex: 10,
+            zIndex: 50,
           }}
           onMouseDown={handleMouseDown}
         />

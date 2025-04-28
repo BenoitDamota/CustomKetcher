@@ -1,5 +1,6 @@
 import KetcherEditor from './KetcherEditor';
 import { LeftPanController } from '../../types/LeftPanController';
+import { MINIMIZED_BAR_WIDTH } from '../ResizableLayout';
 
 interface Props {
   isLeftPanReduced: boolean;
@@ -22,7 +23,7 @@ const LeftPan: React.FC<Props> = ({
         <button
           style={{
             all: 'unset',
-            width: '30px',
+            width: `${MINIMIZED_BAR_WIDTH}px`,
             height: '100%',
             backgroundColor: '#525252',
             color: 'white',
