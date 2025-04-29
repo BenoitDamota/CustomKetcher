@@ -167,7 +167,7 @@ export default function ResizableLayout() {
             height: '100%',
             cursor: 'col-resize',
             background: '#525252',
-            zIndex: 50,
+            zIndex: 39,
           }}
           onMouseDown={handleMouseDown}
         />

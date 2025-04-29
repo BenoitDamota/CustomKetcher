@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
 import Plot from 'react-plotly.js';
 import MinimizeButton from './MinimizeRightPanButton';
-import mockData from '../../mock/predicteSpectrumData.json';
 import { useAppContext } from '../../context/AppContext';
+import { SpectrumDataPoint } from '../../types/SpectrumDataType';
 
 interface PlotlyHTMLElementWithFullLayout extends Plotly.PlotlyHTMLElement {
   _fullLayout: Plotly.Layout & {
@@ -20,42 +20,35 @@ interface PlotlyHTMLElementWithFullLayout extends Plotly.PlotlyHTMLElement {
   };
 }
 
-interface Props {
-  minimizeRightPan: () => void;
-}
-
-type DataPoint = {
-  ppm: number;
-  intensity: number;
-  atomID: number[];
-};
-
-type Region = {
+export type SpectrumRegion = {
   atomIds: number[];
   ppmMin: number;
   ppmMax: number;
   intensityMax: number;
 };
 
+interface Props {
+  minimizeRightPan: () => void;
+}
+
 const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
-  const { openAlert } = useAppContext();
+  const { openAlert, spectrumData } = useAppContext();
 
   const [isReady, setIsReady] = useState(false);
-  const [regions, setRegions] = useState<Region[]>([]);
-  const spectrumData = (mockData as DataPoint[]).sort((a, b) => b.ppm - a.ppm);
+  const [regions, setRegions] = useState<SpectrumRegion[]>([]);
 
   // Regrouper les données selon atomID
   useEffect(() => {
-    const grouped = new Map<string, DataPoint[]>();
+    const grouped = new Map<string, SpectrumDataPoint[]>();
 
-    spectrumData.forEach((point) => {
+    spectrumData.forEach((point: SpectrumDataPoint) => {
       const key = point.atomID?.sort((a, b) => a - b).join(',') || '';
       if (!key) return;
       if (!grouped.has(key)) grouped.set(key, []);
       grouped.get(key)?.push(point);
     });
 
-    const regionList: Region[] = [];
+    const regionList: SpectrumRegion[] = [];
     grouped.forEach((group) => {
       const ppms = group.map((p) => p.ppm);
       const intensities = group.map((p) => p.intensity);
@@ -197,8 +190,8 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
       <Plot
         data={[
           {
-            x: spectrumData.map((d) => d.ppm),
-            y: spectrumData.map((d) => d.intensity),
+            x: spectrumData.map((d: SpectrumDataPoint) => d.ppm),
+            y: spectrumData.map((d: SpectrumDataPoint) => d.intensity),
             type: 'scatter',
             mode: 'lines',
             line: { color: '#167782' },
@@ -214,6 +207,7 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
             hoverinfo: 'skip',
             name: `Region ${i + 1}`,
             customdata: [region.atomIds],
+            label: 'test',
           })),
         ]}
         layout={layout}

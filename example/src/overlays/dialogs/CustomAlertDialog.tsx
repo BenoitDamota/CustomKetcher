@@ -20,11 +20,18 @@ export default function CustomAlertDialog({
   content,
   onClose,
 }: CustomAlertDialogProps) {
+  const formattedContent = content.split('\n').map((line, index) => (
+    <span key={index}>
+      {line}
+      <br />
+    </span>
+  ));
+
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
-        <Typography>{content}</Typography>
+        <Typography>{formattedContent}</Typography>
       </DialogContent>
       <DialogActions>
         <Button variant="contained" color="primary" onClick={onClose}>

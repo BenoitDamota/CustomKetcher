@@ -9,6 +9,11 @@ import {
   IconButton,
   Stack,
 } from '@mui/material';
+import {
+  loadProjectFile,
+  openFileInput,
+  ProjectFileParsedContentJSON,
+} from '../../utils/fileUtils';
 
 export default function Toolbar() {
   const { openAlert, openConfirm, openModal } = useAppContext();
@@ -56,16 +61,81 @@ export default function Toolbar() {
     }
   }
 
+  const { spectrumData, setSpectrumData } = useAppContext();
+
+  // Function to load a project file
   function handleLoad() {
-    openAlert.current('Loading', 'Loading file...');
+    openFileInput((fileContent: string) => {
+      const result = loadProjectFile(fileContent);
+
+      // Display success message or preview (if available)
+      if (result.success) {
+        openAlert.current('Load Project File', result.success);
+        const data: ProjectFileParsedContentJSON = result.data;
+
+        const moleculeFormat = data.molecules.format;
+        const moleculeData = data.molecules.data;
+        const spectrum = data.spectrum;
+
+        if (moleculeFormat === 'SMILES') {
+          setSpectrumData(spectrum);
+          window.ketcher?.setMolecule(moleculeData);
+          console.log(window.ketcher?.settings);
+        }
+      }
+
+      // Display errors if any
+      if (result.errors.length > 0) {
+        const errorsStr = result.errors.join(',');
+        openAlert.current('Failed To Load Project File', errorsStr);
+      }
+    });
+  }
+
+  function handleSaveAs() {
+    if (!window.ketcher) {
+      openAlert.current('Error When Saving', 'Could not find Ketcher!');
+      return;
+    }
+
+    window.ketcher.getSmiles().then((smiles: string) => {
+      if (!smiles) {
+        openAlert.current(
+          'Error When Saving',
+          'No molecule in SMILES format obtained from Ketcher',
+        );
+        return;
+      }
+
+      const parsedContent = {
+        molecules: {
+          format: 'SMILES',
+          data: smiles,
+        },
+        spectrum: spectrumData,
+      };
+
+      const jsonContent = JSON.stringify(parsedContent, null, 2);
+      const blob = new Blob([jsonContent], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'project_output.json';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      openAlert.current(
+        'Saving',
+        'File saved successfully as project_output.json',
+      );
+    });
   }
 
   function handleExport() {
     openAlert.current('Exporting', 'Exporting data...');
-  }
-
-  function handleSaveAs() {
-    openAlert.current('Save', 'Saving file...');
   }
 
   return (
@@ -125,7 +195,6 @@ export default function Toolbar() {
             >
               file_open
             </button>
-
             {isBelow700 && (
               <IconButton
                 onClick={(e) => setAnchorElLoad(e.currentTarget)}
@@ -151,7 +220,6 @@ export default function Toolbar() {
               </IconButton>
             )}
           </div>
-
           {!isBelow700 && (
             <>
               <button
@@ -172,7 +240,6 @@ export default function Toolbar() {
           )}
         </div>
       </div>
-      {/* Load Menu dropdown */}
       <Menu
         anchorEl={anchorElLoad}
         open={openLoadMenu}
@@ -205,6 +272,7 @@ export default function Toolbar() {
           </MenuItem>
         </Stack>
       </Menu>
+
       {/* Middle Controls (absolute - center) */}
       <div
         style={{
@@ -235,7 +303,8 @@ export default function Toolbar() {
           manufacturing
         </button>
       </div>
-      {/* Droite */}
+
+      {/* Right Controls */}
       <div
         style={{
           display: 'flex',
@@ -286,7 +355,6 @@ export default function Toolbar() {
             </IconButton>
           )}
         </div>
-
         {!isBelow700 && (
           <>
             <button
