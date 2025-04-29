@@ -45,6 +45,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background-color: #fff;
   color: #333;
+  min-width: 580px;
 }
 
 code {
@@ -88,6 +89,10 @@ nav .material-symbols-outlined:hover {
 
 .hover-red:hover {
   color: red !important;
+}
+
+.hover-primary:hover {
+  color: #188794 !important;
 }
 
 .menu-clair {

@@ -23,6 +23,7 @@ const LeftPan: React.FC<Props> = ({
         <button
           style={{
             all: 'unset',
+            display: 'block',
             width: `${MINIMIZED_BAR_WIDTH}px`,
             height: '100%',
             backgroundColor: '#525252',

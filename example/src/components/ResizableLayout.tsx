@@ -42,7 +42,7 @@ export default function ResizableLayout() {
         } else {
           reduceRightPan(false);
           reduceLeftPan(true);
-          setLeftWidth(0);
+          setLeftWidth(MINIMIZED_BAR_WIDTH);
         }
       }
     } else {
@@ -140,8 +140,17 @@ export default function ResizableLayout() {
   });
 
   return (
-    <div style={{ display: 'flex', height: '100%' }}>
-      <div className="menu-clair" style={{ width: leftWidth, minWidth: 30 }}>
+    <div
+      style={{
+        display: 'flex',
+        width: '100%',
+        height: '100%',
+      }}
+    >
+      <div
+        className="menu-clair"
+        style={{ width: leftWidth, height: '100%', minWidth: '30px' }}
+      >
         <LeftPane
           isLeftPanReduced={isLeftPanReduced}
           minimizeLeftPan={minimizeLeftPan}
@@ -155,6 +164,7 @@ export default function ResizableLayout() {
           aria-hidden="true"
           style={{
             width: RESIZE_BAR_WIDTH,
+            height: '100%',
             cursor: 'col-resize',
             background: '#525252',
             zIndex: 50,
@@ -163,7 +173,7 @@ export default function ResizableLayout() {
         />
       )}
 
-      <div className="menu-clair" style={{ flexGrow: 1 }}>
+      <div className="menu-clair" style={{ flexGrow: 1, height: '100%' }}>
         <RightPan
           isRightPanReduced={isRightPanReduced}
           minimizeRightPan={minimizeRightPan}
