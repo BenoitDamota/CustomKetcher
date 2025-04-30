@@ -42,6 +42,29 @@ function AboutDialog(props) {
       <div className={classes.body}>
         <div className={classes.verionsInfo}>
           <dl className={classes.ketcherVersionInfo}>
+            {/* Indication that Ketcher was modified – Custom fork */}
+            <div style={{ marginBottom: '20px' }}>
+              <p>
+                Modified version of{' '}
+                <a
+                  href="https://lifescience.opensource.epam.com/ketcher/index.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Ketcher
+                </a>
+                <br />
+                Adapted by and for <strong>LERIA</strong> (
+                <a
+                  href="https://github.com/KreeZeG123/CustomKetcher"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  GitHub)
+                </a>
+              </p>
+            </div>
+            <br />
             <dt data-testid="build-version">
               <a
                 href={props.overviewLink}
