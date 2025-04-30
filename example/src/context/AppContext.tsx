@@ -5,10 +5,16 @@ import { SpectrumDataPoint } from '../types/SpectrumDataType';
 import { mockPredictionParameters } from '../mock/modelParametersData';
 import { mockSettingsCategories } from '../mock/generalSettingsData';
 
-type ModalName = 'GeneralSettings' | 'About' | 'PredictionParameters' | null;
+type ModalName =
+  | 'GeneralSettings'
+  | 'About'
+  | 'PredictionParameters'
+  | 'ExportProject'
+  | null;
 
 type AppContextType = {
-  ketcherRef: React.RefObject<unknown>;
+  ketcherRef: React.MutableRefObject<unknown>;
+  plotlyRef: React.MutableRefObject<Plotly.PlotlyHTMLElement | null>;
   generalSettings: GeneralSettingsCategoryType[];
   setGeneralSettings: React.Dispatch<
     React.SetStateAction<GeneralSettingsCategoryType[]>
@@ -26,12 +32,15 @@ type AppContextType = {
   openModal: (name: ModalName) => void;
   closeModal: () => void;
   activeModal: ModalName;
+  getSpectrumImage?: () => Promise<string | null>;
+  setGetSpectrumImage: (fn: () => Promise<string | null>) => void;
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const ketcherRef = useRef<unknown>(null);
+  const plotlyRef = useRef<Plotly.PlotlyHTMLElement | null>(null);
 
   const openAlert = useRef<(title: string, content: string) => void>(() => {
     // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -54,16 +63,20 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   >(mockPredictionParameters);
 
   const [activeModal, setActiveModal] = useState<ModalName>(null);
-
   const openModal = (name: ModalName) => {
     setActiveModal(name);
   };
   const closeModal = () => setActiveModal(null);
 
+  const [getSpectrumImage, setGetSpectrumImage] = useState<
+    () => Promise<string | null>
+  >(() => async () => null);
+
   return (
     <AppContext.Provider
       value={{
         ketcherRef,
+        plotlyRef,
         generalSettings,
         setGeneralSettings,
         predictionParameters,
@@ -75,6 +88,8 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         openModal,
         closeModal,
         activeModal,
+        getSpectrumImage,
+        setGetSpectrumImage,
       }}
     >
       {children}

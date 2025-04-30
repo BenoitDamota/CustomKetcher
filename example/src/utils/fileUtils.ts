@@ -1,3 +1,5 @@
+import { SpectrumDataPoint } from '../types/SpectrumDataType';
+
 export interface ProjectFileMoleculesJSON {
   format: string;
   data: string;
@@ -87,18 +89,43 @@ export function openFileInput(callback: (fileContent: string) => void): void {
   inputFile.click();
 }
 
-// Function to save a project in JSON format
-export function saveProjectFileToJSON(
-  parsedContent: ProjectFileParsedContentJSON,
-  fileName: string,
+// Function to convert project content to JSON string
+export function convertProjectToJSON(
+  moleculesFormat: string,
+  moleculesData: string,
+  spectrumData: SpectrumDataPoint[],
+): string {
+  const parsedContent = {
+    molecules: {
+      format: moleculesFormat,
+      data: moleculesData,
+    },
+    spectrum: spectrumData,
+  } as ProjectFileParsedContentJSON;
+
+  return JSON.stringify(parsedContent, null, 2);
+}
+
+// Function to download a project in JSON format
+export function downloadProjectFileToJSON(
+  moleculesFormat: string,
+  moleculesData: string,
+  spectrumData: SpectrumDataPoint[],
 ): void {
-  const fileContent = JSON.stringify(parsedContent, null, 2);
-  const blob = new Blob([fileContent], { type: 'application/json' });
+  const jsonContent = convertProjectToJSON(
+    moleculesFormat,
+    moleculesData,
+    spectrumData,
+  );
+
+  const blob = new Blob([jsonContent], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
 
   const link = document.createElement('a');
   link.href = url;
-  link.download = fileName;
+  link.download = 'project_output.json';
+  document.body.appendChild(link);
   link.click();
+  document.body.removeChild(link);
   URL.revokeObjectURL(url);
 }

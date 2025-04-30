@@ -32,14 +32,14 @@ export default function CustomConfirmDialog({
           color="secondary"
           onClick={() => onClose(false)}
         >
-          Annuler
+          Cancel
         </Button>
         <Button
           variant="contained"
           color="primary"
           onClick={() => onClose(true)}
         >
-          Confirmer
+          Confirm
         </Button>
       </DialogActions>
     </Dialog>

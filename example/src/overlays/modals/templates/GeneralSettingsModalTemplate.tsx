@@ -180,10 +180,10 @@ const SettingsModalTemplate: React.FC<Props> = ({ onClose, timeoutRef }) => {
         </Button>
         <Stack direction="row-reverse" spacing={2} justifyContent="flex-end">
           <Button variant="outlined" color="secondary" onClick={customOnClose}>
-            Annuler
+            Cancel
           </Button>
           <Button variant="contained" color="primary" onClick={handleApply}>
-            Appliquer
+            Apply
           </Button>
         </Stack>
       </Stack>

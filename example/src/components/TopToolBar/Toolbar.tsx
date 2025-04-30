@@ -10,6 +10,7 @@ import {
   Stack,
 } from '@mui/material';
 import {
+  downloadProjectFileToJSON,
   loadProjectFile,
   openFileInput,
   ProjectFileParsedContentJSON,
@@ -80,7 +81,6 @@ export default function Toolbar() {
         if (moleculeFormat === 'SMILES') {
           setSpectrumData(spectrum);
           window.ketcher?.setMolecule(moleculeData);
-          console.log(window.ketcher?.settings);
         }
       }
 
@@ -107,35 +107,13 @@ export default function Toolbar() {
         return;
       }
 
-      const parsedContent = {
-        molecules: {
-          format: 'SMILES',
-          data: smiles,
-        },
-        spectrum: spectrumData,
-      };
-
-      const jsonContent = JSON.stringify(parsedContent, null, 2);
-      const blob = new Blob([jsonContent], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'project_output.json';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      downloadProjectFileToJSON('SMILES', smiles, spectrumData);
 
       openAlert.current(
         'Saving',
         'File saved successfully as project_output.json',
       );
     });
-  }
-
-  function handleExport() {
-    openAlert.current('Exporting', 'Exporting data...');
   }
 
   return (
@@ -231,7 +209,7 @@ export default function Toolbar() {
               </button>
               <button
                 title="Export"
-                onClick={handleExport}
+                onClick={() => openModal('ExportProject')}
                 className="material-symbols-outlined"
               >
                 file_export
@@ -259,7 +237,7 @@ export default function Toolbar() {
             <span className="material-symbols-outlined">save_as</span>
           </MenuItem>
           <MenuItem
-            onClick={handleExport}
+            onClick={() => openModal('ExportProject')}
             title="Export"
             sx={{
               justifyContent: 'center',

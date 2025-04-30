@@ -32,10 +32,26 @@ interface Props {
 }
 
 const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
-  const { openAlert, spectrumData } = useAppContext();
+  const { openAlert, spectrumData, plotlyRef } = useAppContext();
 
   const [isReady, setIsReady] = useState(false);
   const [regions, setRegions] = useState<SpectrumRegion[]>([]);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const [layout, _] = useState({
+    autosize: true,
+    margin: { t: 50, r: 40, b: 40, l: 40 },
+    responsive: true,
+    xaxis: {
+      title: 'ppm',
+      autorange: 'reversed', // Axe ppm en décroissant
+    },
+    yaxis: {
+      title: 'Intensity',
+    },
+    showlegend: false,
+  });
 
   // Regrouper les données selon atomID
   useEffect(() => {
@@ -77,29 +93,12 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
     return () => observer.disconnect();
   }, []);
 
-  const containerRef = useRef<HTMLDivElement>(null);
-  const plotInstanceRef = useRef<Plotly.PlotlyHTMLElement | null>(null);
-
   const handlePlotReady = (
     _: unknown,
     graphDiv: Plotly.PlotlyHTMLElement | null,
   ) => {
-    plotInstanceRef.current = graphDiv;
+    plotlyRef.current = graphDiv;
   };
-
-  const [layout, _] = useState({
-    autosize: true,
-    margin: { t: 50, r: 40, b: 40, l: 40 },
-    responsive: true,
-    xaxis: {
-      title: 'ppm',
-      autorange: 'reversed', // Axe ppm en décroissant
-    },
-    yaxis: {
-      title: 'Intensity',
-    },
-    showlegend: false,
-  });
 
   // Detection of clicks everywhere on the pyplot instead of the default click on points only
   useEffect(() => {
@@ -113,15 +112,14 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
     }
 
     const handleClick = (e: MouseEvent) => {
-      if (!plotInstanceRef.current) return;
+      if (!plotlyRef.current) return;
 
       const bbox = plotDiv.getBoundingClientRect();
       const xPx = e.clientX - bbox.left;
       const yPx = e.clientY - bbox.top;
 
-      const fullLayout = (
-        plotInstanceRef.current as PlotlyHTMLElementWithFullLayout
-      )._fullLayout;
+      const fullLayout = (plotlyRef.current as PlotlyHTMLElementWithFullLayout)
+        ._fullLayout;
 
       const xaxis = fullLayout.xaxis;
       const yaxis = fullLayout.yaxis;
@@ -158,7 +156,7 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
           // Zoom on this region
           const margin = 0.5;
 
-          Plotly.relayout(plotInstanceRef.current, {
+          Plotly.relayout(plotlyRef.current, {
             xaxis: {
               range: [
                 closestRegion.ppmMax + margin,
@@ -183,7 +181,7 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
     return () => {
       plotDiv.removeEventListener('click', handleClick);
     };
-  }, [openAlert, regions]);
+  }, [openAlert, plotlyRef, regions]);
 
   return (
     <div ref={containerRef} style={{ height: '100%' }}>
