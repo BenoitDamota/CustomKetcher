@@ -1,9 +1,41 @@
 import { useRef, useEffect } from 'react';
-import MinimizeIcon from '../../assets/minimize.svg';
 
 interface Props {
   minimizeRightPan: () => void;
 }
+
+const minimizeIcon = (
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 28"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <title>Minimize</title>
+    <path
+      fill="currentColor"
+      fillRule="evenodd"
+      d="
+    M3 3
+    h18
+    a2 2 0 0 1 2 2
+    v18
+    a2 2 0 0 1-2 2
+    H3
+    a2 2 0 0 1-2-2
+    V5
+    a2 2 0 0 1 2-2
+    z
+
+    M7 13
+    h10
+    v2
+    H7
+    z
+  "
+    />
+  </svg>
+);
 
 const MinimizeButton: React.FC<Props> = ({ minimizeRightPan }) => {
   const btnRef = useRef<HTMLButtonElement | null>(null);
@@ -22,7 +54,7 @@ const MinimizeButton: React.FC<Props> = ({ minimizeRightPan }) => {
   return (
     <>
       <button className="minimize-btn" onClick={() => minimizeRightPan()}>
-        <MinimizeIcon />
+        {minimizeIcon}
       </button>
       <style>
         {`

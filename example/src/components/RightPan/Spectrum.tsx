@@ -165,14 +165,6 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
                 setTimeout(() => {
                   if (!closestRegion) return;
                   ketcher.editor.selection({ atoms: closestRegion.atomIds });
-
-                  // Will add a settings to show or skip this modal
-                  openAlert.current(
-                    'Associated atoms',
-                    `The associated atoms have been selected in the molecular editor : ${closestRegion.atomIds.join(
-                      ', ',
-                    )}`,
-                  );
                 }, 200);
               })
               .catch((error) => {
