@@ -28,7 +28,6 @@ const MinimizeButton: React.FC<Props> = ({ minimizeRightPan }) => {
         {`
         .minimize-btn {
           border-radius: 4px;
-          padding: 2px;
           width: 28px;
           height: 28px;
           border: none;
@@ -36,7 +35,6 @@ const MinimizeButton: React.FC<Props> = ({ minimizeRightPan }) => {
           cursor: pointer;
           color: #333;
           transition: fill 0.2s ease;
-          margin-right: 11px;
         }
 
         .minimize-btn > svg {

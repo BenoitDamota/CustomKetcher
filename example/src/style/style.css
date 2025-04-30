@@ -21,7 +21,7 @@
 }
 
 .material-symbols-outlined {
-  font-family: 'Material Symbols Outlined';
+  font-family: 'Material Symbols Outlined', sans-serif !important;
   font-weight: normal;
   font-style: normal;
   font-size: 24px; /* ou la taille que tu veux */
@@ -95,6 +95,18 @@ nav .material-symbols-outlined:hover {
   color: #188794 !important;
 }
 
+.hover-black:hover {
+  color: #333 !important;
+}
+
+.hover-brightness-130:hover {
+  filter: brightness(130%) !important;
+}
+
+.color-primary {
+  color: #188794 !important;
+}
+
 .menu-clair {
   background-color: #FCFCFC;
   color: #333;
@@ -103,38 +115,4 @@ nav .material-symbols-outlined:hover {
 .menu-fonce {
   background-color: #676767;
   color: #fff;
-}
-
-/* Change the tooltip style so it match the global style */
-.plotly .modebar-btn[data-title]:hover::after {
-  content: attr(data-title);
-  background-color: rgb(255, 255, 255);  /* Fond clair avec transparence */
-  color: #333;
-  padding: 5px 10px;
-  border-radius: 2px;
-  border: 1px solid #333;
-  font-size: 12px;
-  white-space: nowrap;
-  box-shadow: none;
-  z-index: 9999;
-  opacity: 0;
-  transition: opacity 0.3s ease-in-out;
-}
-.plotly .modebar-btn[data-title]:hover::after {
-  opacity: 1;
-}
-
-/* Change order so that the tooltip fit */
-.modebar {
-  display: flex;
-  flex-direction: row;
-}
-.modebar-group:nth-child(1) {
-  order: 2;
-}
-.modebar-group:nth-child(2) {
-  order: 1;
-}
-.modebar-group:nth-child(3) {
-  order: 3;
 }

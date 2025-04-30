@@ -4,6 +4,7 @@ import Plot from 'react-plotly.js';
 import MinimizeButton from './MinimizeRightPanButton';
 import { useAppContext } from '../../context/AppContext';
 import { SpectrumDataPoint } from '../../types/SpectrumDataType';
+import AutoZoomOnRegionButton from './AutomZoomOnRegionButton';
 
 interface PlotlyHTMLElementWithFullLayout extends Plotly.PlotlyHTMLElement {
   _fullLayout: Plotly.Layout & {
@@ -34,8 +35,9 @@ interface Props {
 const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
   const { openAlert, spectrumData, plotlyRef } = useAppContext();
 
-  const [isReady, setIsReady] = useState(false);
+  const [modebarContainerIsReady, setIsModebarContainerReady] = useState(false);
   const [regions, setRegions] = useState<SpectrumRegion[]>([]);
+  const [autoZoomOnRegion, setAutoZoomOnRegion] = useState<boolean>(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -84,7 +86,7 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
     const observer = new MutationObserver(() => {
       const modebarContainer = document.querySelector('.modebar-container');
       if (modebarContainer) {
-        setIsReady(true);
+        setIsModebarContainerReady(true);
         observer.disconnect();
       }
     });
@@ -134,7 +136,7 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
         const xCoord = xaxis.p2c(xPx - xaxis._offset);
 
         // Find the region with the nearest center (x only) of the click
-        let closestRegion = null;
+        let closestRegion: SpectrumRegion | null = null;
         let closestDistance = Infinity;
 
         for (const region of regions) {
@@ -148,28 +150,60 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
         }
 
         if (closestRegion) {
-          openAlert.current(
-            'Associated atoms',
-            closestRegion.atomIds.join(','),
-          );
+          const ketcher = window.ketcher;
 
-          // Zoom on this region
-          const margin = 0.5;
+          if (!ketcher) {
+            openAlert.current(
+              'Error',
+              'Ketcher is not available, the associated atoms will not be shown in the editor',
+            );
+          } else {
+            ketcher
+              .layout()
+              .then(() => {
+                // Delay to let ketcher render the layout action before selecting the atoms
+                setTimeout(() => {
+                  if (!closestRegion) return;
+                  ketcher.editor.selection({ atoms: closestRegion.atomIds });
 
-          Plotly.relayout(plotlyRef.current, {
-            xaxis: {
-              range: [
-                closestRegion.ppmMax + margin,
-                closestRegion.ppmMin - margin,
-              ],
-            },
-            yaxis: {
-              range: [
-                0,
-                closestRegion.intensityMax + closestRegion.intensityMax * 0.05,
-              ],
-            },
-          });
+                  // Will add a settings to show or skip this modal
+                  openAlert.current(
+                    'Associated atoms',
+                    `The associated atoms have been selected in the molecular editor : ${closestRegion.atomIds.join(
+                      ', ',
+                    )}`,
+                  );
+                }, 200);
+              })
+              .catch((error) => {
+                console.error('Error during Ketcher layout:', error);
+                openAlert.current(
+                  'Error',
+                  'An error occurred while trying to layout the molecule.',
+                );
+              });
+          }
+
+          if (autoZoomOnRegion) {
+            // Zoom on this region
+            const margin = 0.5;
+
+            Plotly.relayout(plotlyRef.current, {
+              xaxis: {
+                range: [
+                  closestRegion.ppmMax + margin,
+                  closestRegion.ppmMin - margin,
+                ],
+              },
+              yaxis: {
+                range: [
+                  0,
+                  closestRegion.intensityMax +
+                    closestRegion.intensityMax * 0.05,
+                ],
+              },
+            });
+          }
         } else {
           openAlert.current('No region found', '');
         }
@@ -181,7 +215,7 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
     return () => {
       plotDiv.removeEventListener('click', handleClick);
     };
-  }, [openAlert, plotlyRef, regions]);
+  }, [autoZoomOnRegion, openAlert, plotlyRef, regions]);
 
   return (
     <div ref={containerRef} style={{ height: '100%' }}>
@@ -220,9 +254,23 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
         onUpdate={handlePlotReady}
       />
 
-      {isReady &&
+      {modebarContainerIsReady &&
         ReactDOM.createPortal(
-          <MinimizeButton minimizeRightPan={minimizeRightPan} />,
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              justifyContent: 'center',
+              alignItems: 'center',
+              marginRight: '16px',
+            }}
+          >
+            <AutoZoomOnRegionButton
+              autoZoomOnRegion={autoZoomOnRegion}
+              setAutoZoomOnRegion={setAutoZoomOnRegion}
+            />
+            <MinimizeButton minimizeRightPan={minimizeRightPan} />
+          </div>,
           document.querySelector('.modebar-container') as Element,
         )}
 
@@ -258,6 +306,40 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
 
         .js-plotly-plot .plotly .modebar .modebar-btn.active:hover > svg > path {
           filter: brightness(1.3);
+        }
+
+        /* Change the tooltip style so it match the global style */
+        .plotly .modebar-btn[data-title]:hover::after {
+          content: attr(data-title);
+          background-color: rgb(255, 255, 255);  /* Fond clair avec transparence */
+          color: #333;
+          padding: 5px 10px;
+          border-radius: 2px;
+          border: 1px solid #333;
+          font-size: 12px;
+          white-space: nowrap;
+          box-shadow: none;
+          z-index: 9999;
+          opacity: 0;
+          transition: opacity 0.3s ease-in-out;
+        }
+        .plotly .modebar-btn[data-title]:hover::after {
+          opacity: 1;
+        }
+
+        /* Change order so that the tooltip fit */
+        .modebar {
+          display: flex;
+          flex-direction: row;
+        }
+        .modebar-group:nth-child(1) {
+          order: 2;
+        }
+        .modebar-group:nth-child(2) {
+          order: 1;
+        }
+        .modebar-group:nth-child(3) {
+          order: 3;
         }
       `}</style>
     </div>
