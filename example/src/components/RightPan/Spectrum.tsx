@@ -231,10 +231,30 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
             hoverinfo: 'skip',
             name: `Region ${i + 1}`,
             customdata: [region.atomIds],
-            label: 'test',
           })),
         ]}
-        layout={layout}
+        layout={{
+          ...layout,
+          annotations: regions.map((region, i) => {
+            const text = region.atomIds
+              .map((id) => id.toLocaleString()) // Formater chaque ID avec des virgules
+              .join('<br />'); // Utiliser '<br />' pour séparer les IDs sur des lignes différentes
+
+            // Calculer la hauteur du texte
+            const lines = region.atomIds.length;
+            const textHeight = lines * 14; // Estimation de la hauteur de chaque ligne (14px)
+
+            return {
+              x: (region.ppmMin + region.ppmMax) / 2, // Positionnement horizontal au centre de la région
+              y: region.intensityMax,
+              yshift: textHeight,
+              text,
+              showarrow: false, // Ne pas afficher une flèche
+              font: { size: 12, color: '#000000' }, // Style du texte
+              align: 'center', // Centrer le texte horizontalement
+            };
+          }),
+        }}
         config={{
           displayModeBar: true,
           displaylogo: false,
