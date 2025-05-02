@@ -22,6 +22,7 @@ interface PlotlyHTMLElementWithFullLayout extends Plotly.PlotlyHTMLElement {
 }
 
 export type SpectrumRegion = {
+  regionId: string;
   atomIds: number[];
   ppmMin: number;
   ppmMax: number;
@@ -67,10 +68,11 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
     });
 
     const regionList: SpectrumRegion[] = [];
-    grouped.forEach((group) => {
+    grouped.forEach((group, index) => {
       const ppms = group.map((p) => p.ppm);
       const intensities = group.map((p) => p.intensity);
       regionList.push({
+        regionId: index,
         atomIds: group[0].atomID,
         ppmMin: Math.min(...ppms),
         ppmMax: Math.max(...ppms),
@@ -197,7 +199,7 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
             });
           }
         } else {
-          openAlert.current('No region found', '');
+          console.log('Spectrum : No closest region found');
         }
       }
     };
@@ -208,6 +210,128 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
       plotDiv.removeEventListener('click', handleClick);
     };
   }, [autoZoomOnRegion, openAlert, plotlyRef, regions]);
+
+  const buildRegionLookup = (
+    regions: SpectrumRegion[],
+  ): { start: number; end: number; regionId: string }[] => {
+    const sortedRegions = regions.sort((a, b) => {
+      const centerA = (a.ppmMin + a.ppmMax) / 2;
+      const centerB = (b.ppmMin + b.ppmMax) / 2;
+      return centerA - centerB;
+    });
+
+    const lookup: { start: number; end: number; regionId: string }[] = [];
+
+    sortedRegions.forEach((r, idx) => {
+      let startValue: number;
+      let endValue: number;
+
+      let centerA: number;
+      let centerB: number;
+
+      if (idx === 0) {
+        startValue = -Infinity;
+      } else {
+        const prevRegion = sortedRegions[idx - 1];
+        centerA = (r.ppmMin + r.ppmMax) / 2;
+        centerB = (prevRegion.ppmMin + prevRegion.ppmMax) / 2;
+        startValue = (centerA + centerB) / 2;
+      }
+
+      if (idx === sortedRegions.length - 1) {
+        endValue = Infinity;
+      } else {
+        const nextRegion = sortedRegions[idx + 1];
+        centerA = (r.ppmMin + r.ppmMax) / 2;
+        centerB = (nextRegion.ppmMin + nextRegion.ppmMax) / 2;
+        endValue = (centerA + centerB) / 2;
+      }
+
+      lookup.push({
+        start: startValue,
+        end: endValue,
+        regionId: r.regionId,
+      });
+    });
+
+    return lookup;
+  };
+
+  const [regionLookup, setRegionLookup] = useState<
+    { start: number; end: number; regionId: string }[]
+  >([]);
+
+  useEffect(() => {
+    setRegionLookup(buildRegionLookup(regions));
+  }, [regions]);
+
+  useEffect(() => {
+    const plotEl = containerRef.current?.querySelector(
+      '.js-plotly-plot',
+    ) as HTMLDivElement | null;
+    if (!plotEl || !plotlyRef.current) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const rect = plotEl.getBoundingClientRect();
+      const xPx = e.clientX - rect.left;
+      const yPx = e.clientY - rect.top;
+
+      if (!plotlyRef.current) return;
+
+      const { xaxis, yaxis } = plotlyRef.current._fullLayout;
+      const inPlot =
+        xPx >= xaxis._offset &&
+        xPx <= xaxis._offset + xaxis._length &&
+        yPx >= yaxis._offset &&
+        yPx <= yaxis._offset + yaxis._length;
+
+      if (!inPlot) {
+        return;
+      }
+
+      const xValue = xaxis.p2c(xPx - xaxis._offset);
+
+      let closestRegionId: string | null = null;
+
+      for (const { start, end, regionId } of regionLookup) {
+        if (xValue > start && xValue <= end) {
+          closestRegionId = regionId;
+          break;
+        }
+      }
+
+      if (closestRegionId) {
+        const closestRegion = regions.find(
+          (region) => region.regionId === closestRegionId,
+        );
+
+        if (closestRegion) {
+          Plotly.relayout(plotlyRef.current, {
+            shapes: [
+              {
+                type: 'rect',
+                xref: 'x',
+                yref: 'paper',
+                x0: closestRegion.ppmMin,
+                x1: closestRegion.ppmMax,
+                y0: 0,
+                y1: 1,
+                line: { color: '#FFFF7F', width: 4 },
+                fillcolor: '#FFFF7F',
+                layer: 'below',
+              },
+            ],
+          });
+        }
+      }
+    };
+
+    plotEl.addEventListener('mousemove', handleMouseMove);
+
+    return () => {
+      plotEl.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [plotlyRef, regionLookup, regions]);
 
   return (
     <div ref={containerRef} style={{ height: '100%' }}>
@@ -221,37 +345,25 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
             line: { color: '#167782' },
             name: 'NMR Spectrum',
           },
-          ...regions.map((region, i) => ({
-            x: [region.ppmMin, region.ppmMax, region.ppmMax, region.ppmMin],
-            y: [0, 0, region.intensityMax, region.intensityMax],
-            type: 'scatter',
-            fill: 'toself',
-            fillcolor: `rgba(22, 119, 130, 0.2)`,
-            line: { width: 0 },
-            hoverinfo: 'skip',
-            name: `Region ${i + 1}`,
-            customdata: [region.atomIds],
-          })),
         ]}
         layout={{
           ...layout,
-          annotations: regions.map((region, i) => {
+          annotations: regions.map((region) => {
             const text = region.atomIds
-              .map((id) => id.toLocaleString()) // Formater chaque ID avec des virgules
-              .join('<br />'); // Utiliser '<br />' pour séparer les IDs sur des lignes différentes
+              .map((id) => id.toLocaleString())
+              .join('<br />');
 
-            // Calculer la hauteur du texte
             const lines = region.atomIds.length;
-            const textHeight = lines * 14; // Estimation de la hauteur de chaque ligne (14px)
+            const textHeight = lines * 14;
 
             return {
-              x: (region.ppmMin + region.ppmMax) / 2, // Positionnement horizontal au centre de la région
+              x: (region.ppmMin + region.ppmMax) / 2,
               y: region.intensityMax,
               yshift: textHeight,
               text,
               showarrow: false, // Ne pas afficher une flèche
-              font: { size: 12, color: '#000000' }, // Style du texte
-              align: 'center', // Centrer le texte horizontalement
+              font: { size: 14, color: '#000000' },
+              align: 'center',
             };
           }),
         }}
