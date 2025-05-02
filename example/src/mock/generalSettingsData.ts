@@ -5,6 +5,14 @@ export const mockSettingsCategories: GeneralSettingsCategoryType[] = [
     settingsCategoryName: 'General',
     settings: [
       {
+        key: 'confirmOnInputSMILES',
+        label:
+          'Show confirmation before prediction if input bar contains a SMILES',
+        type: 'boolean',
+        default: true,
+        value: true,
+      },
+      {
         key: 'maxRetries',
         label: 'Maximum Retries',
         type: 'number',

@@ -8,6 +8,7 @@ import { mockSettingsCategories } from '../mock/generalSettingsData';
 type ModalName =
   | 'GeneralSettings'
   | 'About'
+  | 'ConfirmPredictionInputBar'
   | 'PredictionParameters'
   | 'ExportProject'
   | null;
@@ -27,7 +28,12 @@ type AppContextType = {
   setSpectrumData: React.Dispatch<React.SetStateAction<SpectrumDataPoint[]>>;
   openAlert: React.MutableRefObject<(title: string, content: string) => void>;
   openConfirm: React.MutableRefObject<
-    (title: string, content: string, onConfirm: () => void) => void
+    (
+      title: string,
+      content: string,
+      onConfirm: () => void,
+      htmlContent?: JSX.Element | string,
+    ) => void
   >;
   openModal: (name: ModalName) => void;
   closeModal: () => void;

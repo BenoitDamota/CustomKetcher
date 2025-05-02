@@ -17,7 +17,7 @@ import {
 } from '../../utils/fileUtils';
 
 const Toolbar: React.FC = () => {
-  const { openAlert, openConfirm, openModal } = useAppContext();
+  const { openAlert, openModal, generalSettings } = useAppContext();
 
   const isBelow850 = useMediaQuery('(max-width:850px)');
   const isBelow700 = useMediaQuery('(max-width:700px)');
@@ -34,16 +34,14 @@ const Toolbar: React.FC = () => {
 
   function handlePrediction() {
     if (inputSmilesBar) {
-      openConfirm.current(
-        'Confirmation',
-        'A molecule is entered in the SMILES bar. Do you want to start the prediction based on this molecule?',
-        () => {
-          openAlert.current(
-            'Prediction Started',
-            `Starting prediction with: ${inputSmilesBar}`,
-          );
-        },
-      );
+      const confirmOnInputSMILES = generalSettings
+        .find((category) => category.settingsCategoryName === 'General')
+        ?.settings.find((setting) => setting.key === 'confirmOnInputSMILES');
+      if (
+        confirmOnInputSMILES !== undefined &&
+        confirmOnInputSMILES.value === true
+      )
+        openModal('ConfirmPredictionInputBar');
     } else {
       if (window.ketcher) {
         window.ketcher.getSmiles(false).then((SMILES: string) => {
