@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import logoIMG from '../../assets/logo.png';
 import InputBarSMILES from './InputBarSmiles';
 import { useAppContext } from '../../context/AppContext';
@@ -16,7 +16,7 @@ import {
   ProjectFileParsedContentJSON,
 } from '../../utils/fileUtils';
 
-export default function Toolbar() {
+const Toolbar: React.FC = () => {
   const { openAlert, openConfirm, openModal } = useAppContext();
 
   const isBelow850 = useMediaQuery('(max-width:850px)');
@@ -78,7 +78,7 @@ export default function Toolbar() {
         const moleculeData = data.molecules.data;
         const spectrum = data.spectrum;
 
-        if (moleculeFormat === 'SMILES') {
+        if (moleculeFormat === 'SMILES' || moleculeFormat === 'MOL') {
           setSpectrumData(spectrum);
           window.ketcher?.setMolecule(moleculeData);
         }
@@ -396,4 +396,6 @@ export default function Toolbar() {
       </Menu>
     </nav>
   );
-}
+};
+
+export default Toolbar;

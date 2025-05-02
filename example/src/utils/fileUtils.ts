@@ -44,7 +44,10 @@ export function loadProjectFile(fileContent: string): LoadProjectFileResult {
       Array.isArray(parsedContent.spectrum)
     ) {
       // Ensure molecule data doesn't contain a period (multiples molecules in a single SMILES)
-      if (parsedContent.molecules.data.includes('.')) {
+      if (
+        parsedContent.molecules.format === 'SMILES' &&
+        parsedContent.molecules.data.includes('.')
+      ) {
         result.errors.push(
           'Molecule data should only contain a single molecule (no dot allowed).',
         );

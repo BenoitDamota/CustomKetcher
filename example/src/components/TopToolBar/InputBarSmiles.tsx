@@ -1,7 +1,21 @@
-export default function InputBarSMILES(props: {
-  input: string | number | readonly string[] | undefined;
+import React from 'react';
+
+interface Props {
+  input: string;
   setInput: (arg0: string) => void;
-}) {
+}
+
+const Spectrum: React.FC<Props> = ({ input, setInput }) => {
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter' && input && input.trim()) {
+      if (window.ketcher) {
+        window.ketcher.setMolecule(input.trim());
+      } else {
+        console.error('Ketcher is not ready');
+      }
+    }
+  };
+
   return (
     <div
       style={{
@@ -19,8 +33,9 @@ export default function InputBarSMILES(props: {
       {/* Input */}
       <input
         type="text"
-        value={props.input}
-        onChange={(e) => props.setInput(e.target.value)}
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onKeyDown={handleKeyDown}
         placeholder="Enter a SMILES"
         style={{
           flexGrow: 1,
@@ -35,10 +50,10 @@ export default function InputBarSMILES(props: {
       {/* Clear icon */}
       <button
         title="Clear SMILES"
-        onClick={() => props.setInput('')}
+        onClick={() => setInput('')}
         className="material-symbols-outlined hover-red"
         style={{
-          visibility: props.input ? 'visible' : 'hidden',
+          visibility: input ? 'visible' : 'hidden',
           marginLeft: '10px',
           fontSize: '24px',
           cursor: 'pointer',
@@ -49,4 +64,6 @@ export default function InputBarSMILES(props: {
       </button>
     </div>
   );
-}
+};
+
+export default Spectrum;
