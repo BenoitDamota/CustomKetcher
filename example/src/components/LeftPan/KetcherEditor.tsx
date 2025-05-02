@@ -1,6 +1,6 @@
 import 'ketcher-react/dist/index.css';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { ButtonsConfig, Editor, InfoModal } from 'ketcher-react';
 import { Ketcher, StructServiceProvider } from 'ketcher-core';
 import { LeftPanController } from '../../types/LeftPanController';
@@ -24,9 +24,11 @@ const {
 const structServiceProvider =
   new StandaloneStructServiceProvider() as StructServiceProvider;
 
-const KetcherEditor = (props: {
+interface Props {
   leftPanController: LeftPanController | undefined;
-}) => {
+}
+
+const KetcherEditor: React.FC<Props> = ({ leftPanController }) => {
   const hiddenButtonsConfig = getHiddenButtonsConfig();
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -52,7 +54,7 @@ const KetcherEditor = (props: {
           );
           window.scrollTo(0, 0);
         }}
-        leftPanController={props.leftPanController}
+        leftPanController={leftPanController}
         disableMacromoleculesEditor={true}
       />
 

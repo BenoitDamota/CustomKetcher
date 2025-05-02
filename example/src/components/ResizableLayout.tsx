@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import LeftPane from './LeftPan/LeftPan';
 import RightPan from './RightPan/RightPan';
 
@@ -7,7 +7,7 @@ export const RESIZE_BAR_WIDTH = 6;
 export const MIN_WIDTH_RIGHT_PAN = 350;
 export const MINIMIZED_BAR_WIDTH = 30;
 
-export default function ResizableLayout() {
+const ResizableLayout: React.FC = () => {
   const initialLeftWidth = window.innerWidth / 2;
   const [leftWidth, setLeftWidth] = useState<number>(initialLeftWidth);
 
@@ -182,4 +182,6 @@ export default function ResizableLayout() {
       </div>
     </div>
   );
-}
+};
+
+export default ResizableLayout;
