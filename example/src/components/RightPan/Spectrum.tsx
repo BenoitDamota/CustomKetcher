@@ -21,6 +21,14 @@ interface PlotlyHTMLElementWithFullLayout extends Plotly.PlotlyHTMLElement {
   };
 }
 
+interface RelayoutEvent {
+  'xaxis.range[0]'?: number;
+  'xaxis.range[1]'?: number;
+  'xaxis.autorange'?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any;
+}
+
 export type SpectrumRegion = {
   regionId: string;
   atomIds: number[];
@@ -344,6 +352,21 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
     };
   }, [plotlyRef, regionLookup, regions]);
 
+  const handleRelayout = (event: RelayoutEvent) => {
+    const range0 = event['xaxis.range[0]'];
+    const range1 = event['xaxis.range[1]'];
+
+    const plotDiv = plotlyRef.current;
+
+    if (!plotDiv) return;
+
+    if (range0 !== undefined && range1 !== undefined && range0 < range1) {
+      Plotly.relayout(plotDiv, {
+        'xaxis.range': [range1, range0],
+      });
+    }
+  };
+
   return (
     <div ref={containerRef} style={{ height: '100%' }}>
       <Plot
@@ -387,6 +410,7 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
         useResizeHandler={true}
         onInitialized={handlePlotReady}
         onUpdate={handlePlotReady}
+        onRelayout={handleRelayout}
       />
 
       {modebarContainerIsReady &&

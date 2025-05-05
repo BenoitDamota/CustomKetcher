@@ -92,6 +92,20 @@ const ExportProjectModalTemplate: React.FC<Props> = ({ onClose }) => {
     if (!plotlyRef?.current) return null;
 
     try {
+      Plotly.relayout(plotlyRef.current, {
+        autosize: true,
+        margin: { t: 50, r: 40, b: 40, l: 40 },
+        responsive: true,
+        xaxis: {
+          title: 'ppm',
+          autorange: 'reversed', // Axe ppm en décroissant
+        },
+        yaxis: {
+          title: 'Intensity',
+        },
+        showlegend: false,
+      });
+
       const imageUrl = await Plotly.toImage(plotlyRef.current, {
         format: 'png',
         width: 800,
