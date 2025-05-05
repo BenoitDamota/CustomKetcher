@@ -180,7 +180,7 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
 
           if (autoZoomOnRegion) {
             // Zoom on this region
-            const margin = 0.5;
+            const margin = 0.025;
 
             Plotly.relayout(plotlyRef.current, {
               xaxis: {
