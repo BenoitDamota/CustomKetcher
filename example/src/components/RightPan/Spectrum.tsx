@@ -328,8 +328,19 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
 
     plotEl.addEventListener('mousemove', handleMouseMove);
 
+    const handleMouseLeave = () => {
+      if (!plotlyRef.current) return;
+
+      Plotly.relayout(plotlyRef.current, {
+        shapes: [],
+      });
+    };
+
+    plotEl.addEventListener('mouseleave', handleMouseLeave);
+
     return () => {
       plotEl.removeEventListener('mousemove', handleMouseMove);
+      plotEl.removeEventListener('mouseleave', handleMouseLeave);
     };
   }, [plotlyRef, regionLookup, regions]);
 
