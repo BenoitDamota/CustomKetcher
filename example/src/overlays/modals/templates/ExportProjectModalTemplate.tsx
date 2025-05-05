@@ -13,6 +13,7 @@ import {
 import { convertProjectToJSON } from '../../../utils/fileUtils';
 import { SpectrumDataPoint } from '../../../types/SpectrumDataType';
 import { useAppContext } from '../../../context/AppContext';
+import { getKekuleSmilesFromKetcher } from '../../../utils/MoleculesUtils';
 
 interface Props {
   onClose: () => void;
@@ -29,7 +30,7 @@ const exportJSON = async (
       throw new Error('Ketcher is not available.');
     }
 
-    const smiles: string = await window.ketcher.getSmiles();
+    const smiles: string | null = await getKekuleSmilesFromKetcher();
 
     if (!smiles) {
       throw new Error('No molecules obtained from Ketcher');

@@ -15,6 +15,7 @@ import {
   openFileInput,
   ProjectFileParsedContentJSON,
 } from '../../utils/fileUtils';
+import { getKekuleSmilesFromKetcher } from '../../utils/MoleculesUtils';
 
 const Toolbar: React.FC = () => {
   const { openAlert, openModal, generalSettings } = useAppContext();
@@ -43,20 +44,16 @@ const Toolbar: React.FC = () => {
       )
         openModal('ConfirmPredictionInputBar');
     } else {
-      if (window.ketcher) {
-        window.ketcher.getSmiles(false).then((SMILES: string) => {
-          if (SMILES) {
-            openAlert.current(
-              'Prediction Started',
-              `Starting prediction with: ${SMILES}`,
-            );
-          } else {
-            openAlert.current('Error', 'No molecule is drawn.');
-          }
-        });
-      } else {
-        openAlert.current('Error', 'Ketcher is not available.');
-      }
+      getKekuleSmilesFromKetcher().then((SMILES: string | null) => {
+        if (SMILES) {
+          openAlert.current(
+            'Prediction Started',
+            `Starting prediction with: ${SMILES}`,
+          );
+        } else {
+          openAlert.current('Error', 'No molecule is drawn.');
+        }
+      });
     }
   }
 
@@ -96,7 +93,7 @@ const Toolbar: React.FC = () => {
       return;
     }
 
-    window.ketcher.getSmiles().then((smiles: string) => {
+    getKekuleSmilesFromKetcher().then((smiles: string | null) => {
       if (!smiles) {
         openAlert.current(
           'Error When Saving',
