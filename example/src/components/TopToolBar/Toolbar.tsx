@@ -64,7 +64,6 @@ const Toolbar: React.FC = () => {
     openFileInput((fileContent: string) => {
       const result = loadProjectFile(fileContent);
 
-      // Display success message or preview (if available)
       if (result.success) {
         openAlert.current('Load Project File', result.success);
         const data: ProjectFileParsedContentJSON = result.data;
@@ -79,7 +78,6 @@ const Toolbar: React.FC = () => {
         }
       }
 
-      // Display errors if any
       if (result.errors.length > 0) {
         const errorsStr = result.errors.join(',');
         openAlert.current('Failed To Load Project File', errorsStr);

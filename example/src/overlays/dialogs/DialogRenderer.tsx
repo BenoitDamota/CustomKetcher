@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAppContext } from '../../context/AppContext';
-import CustomAlertDialog from './CustomAlertDialog'; // Assuming you have a similar alert dialog component
-import CustomConfirmDialog from './CustomConfirmDialog'; // Your confirm dialog component
+import CustomAlertDialog from './CustomAlertDialog';
+import CustomConfirmDialog from './CustomConfirmDialog';
 
 const DialogRenderer: React.FC = () => {
   const [alertOpen, setAlertOpen] = useState(false);

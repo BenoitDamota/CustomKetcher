@@ -57,7 +57,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     // eslint-disable-next-line @typescript-eslint/no-empty-function
   });
 
-  // Load mock spectrum data
   const [spectrumData, setSpectrumData] = useState<SpectrumDataPoint[]>([]);
 
   const [generalSettings, setGeneralSettings] = useState<

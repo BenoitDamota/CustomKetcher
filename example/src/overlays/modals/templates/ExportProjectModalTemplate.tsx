@@ -64,7 +64,6 @@ const exportIMG = async (
         'The function to generate the spectrum image is not initialized',
       );
 
-    // Now, call the function to get the Promise, then await it to get the base64 string
     const base64Image = await getSpectrumImage();
     if (!base64Image) throw new Error('Failed to generate image.');
 
@@ -99,7 +98,7 @@ const ExportProjectModalTemplate: React.FC<Props> = ({ onClose }) => {
         responsive: true,
         xaxis: {
           title: 'ppm',
-          autorange: 'reversed', // Axe ppm en décroissant
+          autorange: 'reversed',
         },
         yaxis: {
           title: 'Intensity',
@@ -137,7 +136,7 @@ const ExportProjectModalTemplate: React.FC<Props> = ({ onClose }) => {
       setFilename(filename);
     } else if (exportType === 'image') {
       setPreviewData('');
-      // Just pass the function (not the result of calling it)
+
       const result = await exportIMG(getSpectrumImage);
       if ('error' in result) {
         setError(result.error);
@@ -181,10 +180,9 @@ const ExportProjectModalTemplate: React.FC<Props> = ({ onClose }) => {
 
   // Function to format JSON content with proper line breaks and escaping
   const formatJsonContent = (jsonString: string) => {
-    // Transform \n into <br />
     const formattedString = jsonString
-      .replace(/\\n/g, '<br />') // Replace escaped newlines
-      .replace(/\\"/g, '&quot;'); // Replace escaped quotes with HTML entities
+      .replace(/\\n/g, '<br />')
+      .replace(/\\"/g, '&quot;');
 
     return formattedString;
   };

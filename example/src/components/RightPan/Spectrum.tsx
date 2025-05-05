@@ -56,7 +56,7 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
     responsive: true,
     xaxis: {
       title: 'ppm',
-      autorange: 'reversed', // Axe ppm en décroissant
+      autorange: 'reversed',
     },
     yaxis: {
       title: 'Intensity',
@@ -64,7 +64,6 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
     showlegend: false,
   });
 
-  // Regrouper les données selon atomID
   useEffect(() => {
     const grouped = new Map<string, SpectrumDataPoint[]>();
 
@@ -187,7 +186,6 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
           }
 
           if (autoZoomOnRegion) {
-            // Zoom on this region
             const margin = 0.025;
 
             Plotly.relayout(plotlyRef.current, {
@@ -395,7 +393,7 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
               y: region.intensityMax,
               yshift: textHeight,
               text,
-              showarrow: false, // Ne pas afficher une flèche
+              showarrow: false,
               font: { size: 14, color: '#000000' },
               align: 'center',
             };
