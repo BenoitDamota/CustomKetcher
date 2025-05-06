@@ -16,10 +16,18 @@ import {
   ProjectFileParsedContentJSON,
 } from '../../utils/fileUtils';
 import { getKekuleSmilesFromKetcher } from '../../utils/MoleculesUtils';
+import { startPrediction } from '../../utils/PredictionUtils';
 
 const Toolbar: React.FC = () => {
-  const { openAlert, openModal, generalSettings, setSnackbarMessages } =
-    useAppContext();
+  const {
+    openAlert,
+    openModal,
+    generalSettings,
+    setSnackbarMessages,
+    predictionParameters,
+    spectrumData,
+    setSpectrumData,
+  } = useAppContext();
 
   const isBelow850 = useMediaQuery('(max-width:850px)');
   const isBelow700 = useMediaQuery('(max-width:700px)');
@@ -45,20 +53,18 @@ const Toolbar: React.FC = () => {
       )
         openModal('ConfirmPredictionInputBar');
     } else {
-      getKekuleSmilesFromKetcher(setSnackbarMessages).then(
-        (SMILES: string | null) => {
-          if (SMILES) {
-            openAlert.current(
-              'Prediction Started',
-              `Starting prediction with: ${SMILES}`,
-            );
-          }
+      startPrediction(predictionParameters, setSnackbarMessages).then(
+        (predResult) => {
+          if (!predResult) return;
+          if (!window.ketcher) return;
+
+          window.ketcher.setMolecule(predResult.smiles);
+
+          setSpectrumData(predResult.spectrum);
         },
       );
     }
   }
-
-  const { spectrumData, setSpectrumData } = useAppContext();
 
   // Function to load a project file
   function handleLoad() {

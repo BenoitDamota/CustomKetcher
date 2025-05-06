@@ -255,6 +255,9 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({
             fullWidth
             margin="normal"
             disabled={true}
+            InputLabelProps={{
+              shrink: true,
+            }}
           />
 
           <Divider style={{ margin: '1rem 0px', backgroundColor: '#cccccc' }} />
