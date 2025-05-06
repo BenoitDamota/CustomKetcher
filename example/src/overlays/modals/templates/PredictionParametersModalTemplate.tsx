@@ -16,6 +16,7 @@ import {
   Stack,
 } from '@mui/material';
 import { useAppContext } from '../../../context/AppContext';
+import { saveModelParameters } from '../../../utils/SettingsUtils';
 
 interface Props {
   onClose: () => void;
@@ -26,7 +27,8 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({
   onClose,
   timeoutRef,
 }) => {
-  const { predictionParameters, setPredictionParameters } = useAppContext();
+  const { predictionParameters, setPredictionParameters, setSnackbarMessages } =
+    useAppContext();
 
   const [selectedModel, setSelectedModel] = useState<string>('');
   const [modelValues, setModelValues] = useState<{
@@ -37,8 +39,16 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({
   }>({});
   const [successMessage, setSuccessMessage] = useState<string>('');
 
+  const selectedModelEndpoint = predictionParameters.models.find(
+    (model) => model.modelName === selectedModel,
+  )?.endpoint;
+
   useEffect(() => {
-    const selectedModelParams = predictionParameters.find(
+    setSelectedModel(predictionParameters.currentModel);
+  }, [predictionParameters.currentModel]);
+
+  useEffect(() => {
+    const selectedModelParams = predictionParameters.models.find(
       (model) => model.modelName === selectedModel,
     );
 
@@ -79,7 +89,7 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({
     };
 
   const validateRequiredFields = (): boolean => {
-    const selectedModelParams = predictionParameters.find(
+    const selectedModelParams = predictionParameters.models.find(
       (model) => model.modelName === selectedModel,
     );
 
@@ -114,7 +124,7 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({
     }
 
     // Update only the selected model's parameters
-    const updatedModels = predictionParameters.map((model) => {
+    const updatedModels = predictionParameters.models.map((model) => {
       if (model.modelName === selectedModel) {
         return {
           ...model,
@@ -127,17 +137,66 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({
       return model;
     });
 
-    setPredictionParameters(updatedModels);
+    const newParameters = {
+      ...predictionParameters,
+      models: updatedModels,
+    };
 
-    setSuccessMessage('Parameters successfully applied');
+    setPredictionParameters(newParameters);
 
-    if (timeoutRef) {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      timeoutRef.current = setTimeout(() => {
-        setSuccessMessage('');
-        onClose();
-      }, 3000);
-    }
+    saveModelParameters(newParameters).then((ok) => {
+      if (ok) {
+        setSuccessMessage('Parameters successfully applied');
+
+        if (timeoutRef) {
+          if (timeoutRef.current) clearTimeout(timeoutRef.current);
+          timeoutRef.current = setTimeout(() => {
+            setSuccessMessage('');
+            onClose();
+          }, 3000);
+        }
+      } else {
+        setSnackbarMessages({
+          severity: 'error',
+          message: 'Failed to save model parameters. Please try again.',
+        });
+      }
+    });
+  };
+
+  const handleUseModel = () => {
+    const newParameters = {
+      ...predictionParameters,
+      currentModel: selectedModel,
+    };
+
+    setPredictionParameters(newParameters);
+
+    saveModelParameters(newParameters).then((ok) => {
+      if (ok) {
+        setSuccessMessage('Prediction model selected successfully.');
+
+        if (timeoutRef) {
+          if (timeoutRef.current) clearTimeout(timeoutRef.current);
+          timeoutRef.current = setTimeout(() => {
+            setSuccessMessage('');
+            onClose();
+          }, 3000);
+        }
+      } else {
+        setPredictionParameters((prevPredictionParameters) => {
+          return {
+            ...prevPredictionParameters,
+            currentModel: '',
+          };
+        });
+
+        setSnackbarMessages({
+          severity: 'error',
+          message: 'Failed to select this prediction model. Please try again.',
+        });
+      }
+    });
   };
 
   const customOnClose = () => {
@@ -162,13 +221,20 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({
         <Select
           labelId="model-select-label"
           id="model-select"
-          value={selectedModel}
+          value={selectedModel || predictionParameters.currentModel}
           label="Choose Prediction A Model *"
           onChange={handleModelChange}
         >
-          {predictionParameters.map((model) => (
+          {predictionParameters.models.map((model) => (
             <MenuItem key={model.modelName} value={model.modelName}>
-              {model.modelName}
+              {model.modelName === predictionParameters.currentModel ? (
+                <span>
+                  {model.modelName}{' '}
+                  <strong className="text-primary">(current)</strong>
+                </span>
+              ) : (
+                model.modelName
+              )}
             </MenuItem>
           ))}
         </Select>
@@ -176,10 +242,25 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({
 
       {selectedModel && (
         <>
+          <TextField
+            key="endpoint"
+            id="endpoint"
+            label="Model Endpoint"
+            type="text"
+            value={
+              selectedModelEndpoint?.startsWith('/')
+                ? `${selectedModelEndpoint} (localhost)`
+                : selectedModelEndpoint
+            }
+            fullWidth
+            margin="normal"
+            disabled={true}
+          />
+
           <Divider style={{ margin: '1rem 0px', backgroundColor: '#cccccc' }} />
 
           {/* Dynamic Parameters */}
-          {predictionParameters
+          {predictionParameters.models
             .find((model) => model.modelName === selectedModel)
             ?.parameters.map((param, index) => {
               const fieldId = `${selectedModel}-${param.key}`;
@@ -249,20 +330,30 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({
 
       <Divider style={{ margin: '1rem 0px', backgroundColor: '#cccccc' }} />
 
-      {/* Submit and Close Buttons */}
+      {/* Buttons */}
       <Stack
-        display={'flex'}
         direction="row"
-        spacing={'16px'}
-        justifyContent="flex-end"
+        spacing={2}
+        justifyContent="space-between"
         sx={{ mt: 3 }}
       >
-        <Button onClick={handleApply} color="primary" variant="contained">
-          Apply
+        <Button onClick={handleUseModel} color="secondary" variant="contained">
+          Use this model
         </Button>
-        <Button onClick={customOnClose} color="secondary" variant="outlined">
-          Cancel
-        </Button>
+        <Stack
+          display={'flex'}
+          direction="row"
+          spacing={'16px'}
+          justifyContent="flex-end"
+          sx={{ mt: 3 }}
+        >
+          <Button onClick={handleApply} color="primary" variant="contained">
+            Apply
+          </Button>
+          <Button onClick={customOnClose} color="secondary" variant="outlined">
+            Cancel
+          </Button>
+        </Stack>
       </Stack>
 
       {/* Error Snackbar */}

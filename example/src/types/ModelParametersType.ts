@@ -10,7 +10,11 @@ export interface ModelParameterType {
 
 export interface ModelParametersType {
   modelName: string;
+  endpoint: string;
   parameters: ModelParameterType[];
 }
 
-export type ModelParameters = ModelParametersType[];
+export interface ModelParameters {
+  currentModel: string;
+  models: ModelParametersType[];
+}

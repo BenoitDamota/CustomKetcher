@@ -87,6 +87,10 @@ nav .material-symbols-outlined:hover {
   color: #188794;
 }
 
+.text-primary {
+  color: #188794;
+}
+
 .hover-red:hover {
   color: red !important;
 }

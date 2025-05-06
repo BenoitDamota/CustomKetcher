@@ -66,7 +66,10 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const [generalSettings, setGeneralSettings] = useState<GeneralSettings>([]);
 
   const [predictionParameters, setPredictionParameters] =
-    useState<ModelParameters>([]);
+    useState<ModelParameters>({
+      currentModel: '',
+      models: [],
+    });
 
   const [activeModal, setActiveModal] = useState<ModalName>(null);
   const openModal = (name: ModalName) => {
