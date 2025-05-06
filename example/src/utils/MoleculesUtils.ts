@@ -1,7 +1,10 @@
 import axios from 'axios';
+import { SnackbarMessage } from '../types/SnackbarMessage';
 const apiUrl = process.env.REACT_APP_INTERN_API_PATH || '';
 
-export const getKekuleSmilesFromKetcher = async (): Promise<string | null> => {
+export const getKekuleSmilesFromKetcher = async (
+  setSnackbarMessages: React.Dispatch<React.SetStateAction<SnackbarMessage>>,
+): Promise<string | null> => {
   try {
     if (!window.ketcher) {
       console.error('Ketcher is not loaded.');
@@ -12,6 +15,10 @@ export const getKekuleSmilesFromKetcher = async (): Promise<string | null> => {
 
     if (!smiles) {
       console.log('getKekuleSmilesFromKetcher : No SMILES found in Ketcher.');
+      setSnackbarMessages({
+        severity: 'warning',
+        message: 'No molecules found in Ketcher.',
+      });
       return null;
     }
 
@@ -32,6 +39,10 @@ export const getKekuleSmilesFromKetcher = async (): Promise<string | null> => {
     } else {
       console.error('Unknown error during SMILES conversion:', error);
     }
+    setSnackbarMessages({
+      severity: 'error',
+      message: 'Error during SMILES conversion.',
+    });
     return null;
   }
 };

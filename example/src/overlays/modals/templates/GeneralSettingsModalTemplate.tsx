@@ -274,15 +274,17 @@ const SettingsModalTemplate: React.FC<Props> = ({ onClose, timeoutRef }) => {
       </Stack>
 
       {/* Error Snackbar */}
-      <Snackbar
-        open={!!errorMessages}
-        autoHideDuration={3500}
-        onClose={() => setErrorMessages('')}
-      >
-        <Alert onClose={() => setErrorMessages('')} severity="error">
-          {errorMessages}
-        </Alert>
-      </Snackbar>
+      {errorMessages && (
+        <Snackbar
+          open={!!errorMessages}
+          autoHideDuration={3500}
+          onClose={() => setErrorMessages('')}
+        >
+          <Alert onClose={() => setErrorMessages('')} severity="error">
+            {errorMessages}
+          </Alert>
+        </Snackbar>
+      )}
 
       {/* Success Snackbar */}
       {successMessage && (

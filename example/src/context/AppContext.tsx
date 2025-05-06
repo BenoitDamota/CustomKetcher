@@ -7,6 +7,7 @@ import {
   loadGeneralSettings,
   loadModelParameters,
 } from '../utils/SettingsUtils';
+import { SnackbarMessage } from '../types/SnackbarMessage';
 
 type ModalName =
   | 'GeneralSettings'
@@ -39,6 +40,8 @@ type AppContextType = {
   openModal: (name: ModalName) => void;
   closeModal: () => void;
   activeModal: ModalName;
+  snackbarMessages: SnackbarMessage;
+  setSnackbarMessages: React.Dispatch<React.SetStateAction<SnackbarMessage>>;
   getSpectrumImage?: () => Promise<string | null>;
   setGetSpectrumImage: (fn: () => Promise<string | null>) => void;
 };
@@ -70,6 +73,11 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     setActiveModal(name);
   };
   const closeModal = () => setActiveModal(null);
+
+  const [snackbarMessages, setSnackbarMessages] = useState<SnackbarMessage>({
+    severity: undefined,
+    message: '',
+  });
 
   const [getSpectrumImage, setGetSpectrumImage] = useState<
     () => Promise<string | null>
@@ -177,6 +185,8 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         openModal,
         closeModal,
         activeModal,
+        snackbarMessages,
+        setSnackbarMessages,
         getSpectrumImage,
         setGetSpectrumImage,
       }}

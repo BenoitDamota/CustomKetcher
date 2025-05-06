@@ -14,6 +14,7 @@ import { convertProjectToJSON } from '../../../utils/fileUtils';
 import { SpectrumDataPoint } from '../../../types/SpectrumDataType';
 import { useAppContext } from '../../../context/AppContext';
 import { getKekuleSmilesFromKetcher } from '../../../utils/MoleculesUtils';
+import { SnackbarMessage } from '../../../types/SnackbarMessage';
 
 interface Props {
   onClose: () => void;
@@ -22,6 +23,7 @@ interface Props {
 // Fonctions to export the project in JSON format
 const exportJSON = async (
   spectrumData: SpectrumDataPoint[],
+  setSnackbarMessages: React.Dispatch<React.SetStateAction<SnackbarMessage>>,
 ): Promise<
   { data: string; blob: Blob; filename: string } | { error: string }
 > => {
@@ -30,7 +32,9 @@ const exportJSON = async (
       throw new Error('Ketcher is not available.');
     }
 
-    const smiles: string | null = await getKekuleSmilesFromKetcher();
+    const smiles: string | null = await getKekuleSmilesFromKetcher(
+      setSnackbarMessages,
+    );
 
     if (!smiles) {
       throw new Error('No molecules obtained from Ketcher');
@@ -80,7 +84,7 @@ const exportIMG = async (
 };
 
 const ExportProjectModalTemplate: React.FC<Props> = ({ onClose }) => {
-  const { spectrumData, plotlyRef } = useAppContext();
+  const { spectrumData, plotlyRef, setSnackbarMessages } = useAppContext();
 
   const [exportType, setExportType] = useState<'json' | 'image'>('json');
   const [previewData, setPreviewData] = useState<string>('');
@@ -120,40 +124,47 @@ const ExportProjectModalTemplate: React.FC<Props> = ({ onClose }) => {
     }
   }, [plotlyRef]);
 
-  const generatePreview = useCallback(async () => {
-    setError(null);
-    if (exportType === 'json') {
-      const result = await exportJSON(spectrumData);
-      if ('error' in result) {
-        setError(result.error);
+  const generatePreview = useCallback(
+    async (
+      setSnackbarMessages: React.Dispatch<
+        React.SetStateAction<SnackbarMessage>
+      >,
+    ) => {
+      setError(null);
+      if (exportType === 'json') {
+        const result = await exportJSON(spectrumData, setSnackbarMessages);
+        if ('error' in result) {
+          setError(result.error);
+          setPreviewData('');
+          setExportBlob(null);
+          return;
+        }
+        const { data, blob, filename } = result;
+        setPreviewData(data);
+        setExportBlob(blob);
+        setFilename(filename);
+      } else if (exportType === 'image') {
         setPreviewData('');
-        setExportBlob(null);
-        return;
-      }
-      const { data, blob, filename } = result;
-      setPreviewData(data);
-      setExportBlob(blob);
-      setFilename(filename);
-    } else if (exportType === 'image') {
-      setPreviewData('');
 
-      const result = await exportIMG(getSpectrumImage);
-      if ('error' in result) {
-        setError(result.error);
-        setPreviewData('');
-        setExportBlob(null);
-        return;
+        const result = await exportIMG(getSpectrumImage);
+        if ('error' in result) {
+          setError(result.error);
+          setPreviewData('');
+          setExportBlob(null);
+          return;
+        }
+        const { data, blob, filename } = result;
+        setPreviewData(data);
+        setExportBlob(blob);
+        setFilename(filename);
       }
-      const { data, blob, filename } = result;
-      setPreviewData(data);
-      setExportBlob(blob);
-      setFilename(filename);
-    }
-  }, [exportType, spectrumData, getSpectrumImage]);
+    },
+    [exportType, spectrumData, getSpectrumImage],
+  );
 
   useEffect(() => {
-    generatePreview();
-  }, [exportType, generatePreview]);
+    generatePreview(setSnackbarMessages);
+  }, [exportType, generatePreview, setSnackbarMessages]);
 
   useEffect(() => {
     return () => {

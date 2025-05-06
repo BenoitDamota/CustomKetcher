@@ -18,7 +18,8 @@ import {
 import { getKekuleSmilesFromKetcher } from '../../utils/MoleculesUtils';
 
 const Toolbar: React.FC = () => {
-  const { openAlert, openModal, generalSettings } = useAppContext();
+  const { openAlert, openModal, generalSettings, setSnackbarMessages } =
+    useAppContext();
 
   const isBelow850 = useMediaQuery('(max-width:850px)');
   const isBelow700 = useMediaQuery('(max-width:700px)');
@@ -44,16 +45,16 @@ const Toolbar: React.FC = () => {
       )
         openModal('ConfirmPredictionInputBar');
     } else {
-      getKekuleSmilesFromKetcher().then((SMILES: string | null) => {
-        if (SMILES) {
-          openAlert.current(
-            'Prediction Started',
-            `Starting prediction with: ${SMILES}`,
-          );
-        } else {
-          openAlert.current('Error', 'No molecule is drawn.');
-        }
-      });
+      getKekuleSmilesFromKetcher(setSnackbarMessages).then(
+        (SMILES: string | null) => {
+          if (SMILES) {
+            openAlert.current(
+              'Prediction Started',
+              `Starting prediction with: ${SMILES}`,
+            );
+          }
+        },
+      );
     }
   }
 
@@ -91,22 +92,24 @@ const Toolbar: React.FC = () => {
       return;
     }
 
-    getKekuleSmilesFromKetcher().then((smiles: string | null) => {
-      if (!smiles) {
+    getKekuleSmilesFromKetcher(setSnackbarMessages).then(
+      (smiles: string | null) => {
+        if (!smiles) {
+          openAlert.current(
+            'Error When Saving',
+            'No molecule in SMILES format obtained from Ketcher',
+          );
+          return;
+        }
+
+        downloadProjectFileToJSON('SMILES', smiles, spectrumData);
+
         openAlert.current(
-          'Error When Saving',
-          'No molecule in SMILES format obtained from Ketcher',
+          'Saving',
+          'File saved successfully as project_output.json',
         );
-        return;
-      }
-
-      downloadProjectFileToJSON('SMILES', smiles, spectrumData);
-
-      openAlert.current(
-        'Saving',
-        'File saved successfully as project_output.json',
-      );
-    });
+      },
+    );
   }
 
   return (
