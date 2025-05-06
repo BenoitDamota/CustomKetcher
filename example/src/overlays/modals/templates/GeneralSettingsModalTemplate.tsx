@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Accordion,
   AccordionSummary,
@@ -17,9 +17,21 @@ import {
   FormControlLabel,
   Snackbar,
   Alert,
+  FormLabel,
 } from '@mui/material';
-import { GeneralSettingType } from '../../../types/GeneralSettingsType';
+import {
+  GeneralSettings,
+  GeneralSettingType,
+} from '../../../types/GeneralSettingsType';
 import { useAppContext } from '../../../context/AppContext';
+import {
+  loadGeneralSettings,
+  loadModelParameters,
+  resetGeneralSettingsToDefault,
+  resetModelParametersToDefault,
+  saveGeneralSettings,
+} from '../../../utils/SettingsUtils';
+import { ModelParameters } from '../../../types/ModelParametersType';
 
 interface Props {
   onClose: () => void;
@@ -27,8 +39,14 @@ interface Props {
 }
 
 const SettingsModalTemplate: React.FC<Props> = ({ onClose, timeoutRef }) => {
-  const { generalSettings, setGeneralSettings } = useAppContext();
+  const {
+    generalSettings,
+    setGeneralSettings,
+    openConfirm,
+    setPredictionParameters,
+  } = useAppContext();
 
+  const [errorMessages, setErrorMessages] = useState<string>('');
   const [successMessage, setSuccessMessage] = useState<string>('');
 
   // Init values with stocked values or default
@@ -44,6 +62,17 @@ const SettingsModalTemplate: React.FC<Props> = ({ onClose, timeoutRef }) => {
     );
     return initial;
   });
+
+  useEffect(() => {
+    const initial: Record<string, string | number | boolean> = {};
+    generalSettings.forEach((category) =>
+      category.settings.forEach((setting) => {
+        initial[setting.key] =
+          setting.value !== undefined ? setting.value : setting.default;
+      }),
+    );
+    setValues(initial);
+  }, [generalSettings]);
 
   // Function to handle settings changes
   const handleChange = (key: string, value: string | number | boolean) => {
@@ -61,7 +90,33 @@ const SettingsModalTemplate: React.FC<Props> = ({ onClose, timeoutRef }) => {
     setValues(initial);
   };
 
-  const handleApply = () => {
+  const handleFactoryReset = () => {
+    openConfirm.current(
+      'Factory Reset',
+      'This will erase all your saved Model Parameters and General Settings. Are you sure you want to continue?',
+      async () => {
+        try {
+          await resetGeneralSettingsToDefault();
+          const settings: GeneralSettings | null = await loadGeneralSettings();
+          if (settings) {
+            setGeneralSettings(settings);
+          }
+
+          await resetModelParametersToDefault();
+          const parameters: ModelParameters | null =
+            await loadModelParameters();
+          if (parameters) {
+            setPredictionParameters(parameters);
+          }
+        } catch (error) {
+          console.error('Error during factory reset:', error);
+          setErrorMessages('Error during factory reset');
+        }
+      },
+    );
+  };
+
+  const handleApply = async () => {
     const updatedCategories = generalSettings.map((category) => ({
       ...category,
       settings: category.settings.map((setting) => ({
@@ -71,6 +126,13 @@ const SettingsModalTemplate: React.FC<Props> = ({ onClose, timeoutRef }) => {
     }));
 
     setGeneralSettings(updatedCategories);
+    const saveResult = await saveGeneralSettings(updatedCategories);
+    if (!saveResult) {
+      setErrorMessages(
+        'An error occurred while saving the settings. Please try again.',
+      );
+      return;
+    }
 
     setSuccessMessage('Settings successfully applied');
 
@@ -168,6 +230,29 @@ const SettingsModalTemplate: React.FC<Props> = ({ onClose, timeoutRef }) => {
           </AccordionDetails>
         </Accordion>
       ))}
+      <Accordion key="advancedSettings">
+        <AccordionSummary
+          expandIcon={
+            <span className="material-symbols-outlined">
+              keyboard_arrow_down
+            </span>
+          }
+        >
+          <Typography>Advanced Settings</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Stack spacing={2} marginBottom={4}>
+            <FormLabel>Reset to factory settings</FormLabel>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={handleFactoryReset}
+            >
+              Factory Reset
+            </Button>
+          </Stack>
+        </AccordionDetails>
+      </Accordion>
 
       <Stack
         direction="row"
@@ -187,6 +272,17 @@ const SettingsModalTemplate: React.FC<Props> = ({ onClose, timeoutRef }) => {
           </Button>
         </Stack>
       </Stack>
+
+      {/* Error Snackbar */}
+      <Snackbar
+        open={!!errorMessages}
+        autoHideDuration={3500}
+        onClose={() => setErrorMessages('')}
+      >
+        <Alert onClose={() => setErrorMessages('')} severity="error">
+          {errorMessages}
+        </Alert>
+      </Snackbar>
 
       {/* Success Snackbar */}
       {successMessage && (

@@ -12,3 +12,5 @@ export interface ModelParametersType {
   modelName: string;
   parameters: ModelParameterType[];
 }
+
+export type ModelParameters = ModelParametersType[];

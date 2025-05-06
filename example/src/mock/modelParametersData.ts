@@ -1,6 +1,6 @@
-import { ModelParametersType } from '../types/ModelParametersType';
+import { ModelParameters } from '../types/ModelParametersType';
 
-export const mockPredictionParameters: ModelParametersType[] = [
+export const mockPredictionParameters: ModelParameters = [
   {
     modelName: 'modelA',
     parameters: [

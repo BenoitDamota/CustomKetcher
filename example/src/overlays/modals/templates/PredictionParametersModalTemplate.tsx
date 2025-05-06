@@ -166,8 +166,11 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({
           label="Choose Prediction A Model *"
           onChange={handleModelChange}
         >
-          <MenuItem value="modelA">Model A</MenuItem>
-          <MenuItem value="modelB">Model B</MenuItem>
+          {predictionParameters.map((model) => (
+            <MenuItem key={model.modelName} value={model.modelName}>
+              {model.modelName}
+            </MenuItem>
+          ))}
         </Select>
       </FormControl>
 

@@ -1,6 +1,6 @@
-import { GeneralSettingsCategoryType } from '../types/GeneralSettingsType';
+import { GeneralSettings } from '../types/GeneralSettingsType';
 
-export const mockSettingsCategories: GeneralSettingsCategoryType[] = [
+export const mockSettingsCategories: GeneralSettings = [
   {
     settingsCategoryName: 'General',
     settings: [

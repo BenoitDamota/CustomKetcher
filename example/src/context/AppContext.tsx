@@ -1,9 +1,12 @@
-import { createContext, useContext, useRef, useState } from 'react';
-import { GeneralSettingsCategoryType } from '../types/GeneralSettingsType';
-import { ModelParametersType } from '../types/ModelParametersType';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { GeneralSettings } from '../types/GeneralSettingsType';
+import { ModelParameters } from '../types/ModelParametersType';
 import { SpectrumDataPoint } from '../types/SpectrumDataType';
-import { mockPredictionParameters } from '../mock/modelParametersData';
-import { mockSettingsCategories } from '../mock/generalSettingsData';
+
+import {
+  loadGeneralSettings,
+  loadModelParameters,
+} from '../utils/SettingsUtils';
 
 type ModalName =
   | 'GeneralSettings'
@@ -16,13 +19,11 @@ type ModalName =
 type AppContextType = {
   ketcherRef: React.MutableRefObject<unknown>;
   plotlyRef: React.MutableRefObject<Plotly.PlotlyHTMLElement | null>;
-  generalSettings: GeneralSettingsCategoryType[];
-  setGeneralSettings: React.Dispatch<
-    React.SetStateAction<GeneralSettingsCategoryType[]>
-  >;
-  predictionParameters: ModelParametersType[];
+  generalSettings: GeneralSettings;
+  setGeneralSettings: React.Dispatch<React.SetStateAction<GeneralSettings>>;
+  predictionParameters: ModelParameters;
   setPredictionParameters: React.Dispatch<
-    React.SetStateAction<ModelParametersType[]>
+    React.SetStateAction<ModelParameters>
   >;
   spectrumData: SpectrumDataPoint[];
   setSpectrumData: React.Dispatch<React.SetStateAction<SpectrumDataPoint[]>>;
@@ -59,13 +60,10 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   const [spectrumData, setSpectrumData] = useState<SpectrumDataPoint[]>([]);
 
-  const [generalSettings, setGeneralSettings] = useState<
-    GeneralSettingsCategoryType[]
-  >(mockSettingsCategories);
+  const [generalSettings, setGeneralSettings] = useState<GeneralSettings>([]);
 
-  const [predictionParameters, setPredictionParameters] = useState<
-    ModelParametersType[]
-  >(mockPredictionParameters);
+  const [predictionParameters, setPredictionParameters] =
+    useState<ModelParameters>([]);
 
   const [activeModal, setActiveModal] = useState<ModalName>(null);
   const openModal = (name: ModalName) => {
@@ -76,6 +74,92 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const [getSpectrumImage, setGetSpectrumImage] = useState<
     () => Promise<string | null>
   >(() => async () => null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchGeneralSettingsWithRetry = async () => {
+      const delay = (ms: number) =>
+        new Promise((resolve) => setTimeout(resolve, ms));
+      const retryInterval = 3000; // ms
+      const maxRetries = 10;
+
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        const settings = await loadGeneralSettings();
+        if (settings && isMounted) {
+          setGeneralSettings(settings);
+          console.log('settings loaded', settings);
+          return;
+        }
+
+        if (!isMounted) return;
+
+        console.warn(
+          `Tentative ${attempt} échouée. Nouvelle tentative dans ${
+            retryInterval / 1000
+          } secondes...`,
+        );
+
+        await delay(retryInterval);
+      }
+
+      // Si on sort de la boucle sans succès
+      if (isMounted) {
+        console.error(
+          'Impossible de charger les paramètres après 10 tentatives.',
+        );
+      }
+    };
+
+    fetchGeneralSettingsWithRetry();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchModelParametersWithRetry = async () => {
+      const delay = (ms: number) =>
+        new Promise((resolve) => setTimeout(resolve, ms));
+      const retryInterval = 3000; // 3 secondes
+      const maxRetries = 10;
+
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        const parameters = await loadModelParameters();
+        if (parameters && isMounted) {
+          setPredictionParameters(parameters);
+          console.log('parameters loaded', parameters);
+          return;
+        }
+
+        if (!isMounted) return;
+
+        console.warn(
+          `Tentative ${attempt} échouée. Nouvelle tentative dans ${
+            retryInterval / 1000
+          } secondes...`,
+        );
+
+        await delay(retryInterval);
+      }
+
+      // Si on sort de la boucle sans succès
+      if (isMounted) {
+        console.error(
+          'Impossible de charger les paramètres du modèle après 10 tentatives.',
+        );
+      }
+    };
+
+    fetchModelParametersWithRetry();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <AppContext.Provider

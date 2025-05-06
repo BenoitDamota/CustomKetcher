@@ -11,3 +11,5 @@ export interface GeneralSettingsCategoryType {
   settingsCategoryName: string;
   settings: GeneralSettingType[];
 }
+
+export type GeneralSettings = GeneralSettingsCategoryType[];

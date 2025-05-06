@@ -9,6 +9,7 @@ import {
   Checkbox,
 } from '@mui/material';
 import { useAppContext } from '../../../context/AppContext';
+import { saveGeneralSettings } from '../../../utils/SettingsUtils';
 
 interface Props {
   onClose: () => void;
@@ -23,13 +24,15 @@ const ConfirmPredictionInputBarModalTemplate: React.FC<Props> = ({
 
   const onConfirm = () => {
     // Change the settings in the context
-    const confirmOnInputSMILES = generalSettings
-      .find((category) => category.settingsCategoryName === 'General')
-      ?.settings.find((setting) => setting.key === 'confirmOnInputSMILES');
-    if (confirmOnInputSMILES) {
-      confirmOnInputSMILES.value = false;
+    if (dontShowAgain) {
+      const confirmOnInputSMILES = generalSettings
+        .find((category) => category.settingsCategoryName === 'General')
+        ?.settings.find((setting) => setting.key === 'confirmOnInputSMILES');
+      if (confirmOnInputSMILES) {
+        confirmOnInputSMILES.value = false;
+        saveGeneralSettings(generalSettings);
+      }
     }
-    // TODO : Logic to save the settings on computer
 
     onClose();
   };
