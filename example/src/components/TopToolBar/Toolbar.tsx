@@ -212,7 +212,7 @@ const Toolbar: React.FC = () => {
             <img
               style={{ display: 'block', height: '40px', width: 'auto' }}
               src={logoIMG}
-              alt="vite img"
+              alt="logo"
             />
           </div>
         )}
@@ -234,7 +234,7 @@ const Toolbar: React.FC = () => {
             }}
           >
             <button
-              title="Open File"
+              title="Open Project"
               className="material-symbols-outlined"
               onClick={() => handleLoad()}
               style={{ fontSize: isBelow700 ? '35px' : '' }}
@@ -269,18 +269,18 @@ const Toolbar: React.FC = () => {
           {!isBelow700 && (
             <>
               <button
-                title="Export"
-                onClick={() => openModal('ExportProject')}
-                className="material-symbols-outlined"
-              >
-                file_export
-              </button>
-              <button
                 title="Clear Project"
                 onClick={handleClearProject}
                 className="material-symbols-outlined"
               >
                 scan_delete
+              </button>
+              <button
+                title="Export Project"
+                onClick={() => openModal('ExportProject')}
+                className="material-symbols-outlined"
+              >
+                file_export
               </button>
             </>
           )}
@@ -293,18 +293,6 @@ const Toolbar: React.FC = () => {
       >
         <Stack direction="column" spacing={1} padding={1}>
           <MenuItem
-            onClick={() => openModal('ExportProject')}
-            title="Export"
-            sx={{
-              justifyContent: 'center',
-              '&:hover': {
-                color: '#188794',
-              },
-            }}
-          >
-            <span className="material-symbols-outlined">file_export</span>
-          </MenuItem>
-          <MenuItem
             onClick={handleClearProject}
             title="Clear Project"
             sx={{
@@ -315,6 +303,18 @@ const Toolbar: React.FC = () => {
             }}
           >
             <span className="material-symbols-outlined">scan_delete</span>
+          </MenuItem>
+          <MenuItem
+            onClick={() => openModal('ExportProject')}
+            title="Export"
+            sx={{
+              justifyContent: 'center',
+              '&:hover': {
+                color: '#188794',
+              },
+            }}
+          >
+            <span className="material-symbols-outlined">file_export</span>
           </MenuItem>
         </Stack>
       </Menu>
@@ -334,7 +334,7 @@ const Toolbar: React.FC = () => {
         }}
       >
         <button
-          title="Start Prediction"
+          title="Launch Prediction"
           className="material-symbols-outlined"
           onClick={() => handlePrediction()}
         >
@@ -342,7 +342,7 @@ const Toolbar: React.FC = () => {
         </button>
         <InputBarSMILES input={inputSmilesBar} setInput={setInputSmilesBar} />
         <button
-          title="Prediction Settings"
+          title="Prediction Parameters"
           onClick={() => openModal('PredictionParameters')}
           className="material-symbols-outlined"
         >
@@ -416,7 +416,7 @@ const Toolbar: React.FC = () => {
               help
             </button>
             <button
-              title="About The App"
+              title="About"
               onClick={() => openModal('About')}
               className="material-symbols-outlined"
             >
