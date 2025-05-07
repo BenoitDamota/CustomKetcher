@@ -12,7 +12,6 @@ import { SnackbarMessage } from '../types/SnackbarMessage';
 type ModalName =
   | 'GeneralSettings'
   | 'About'
-  | 'ConfirmPredictionInputBar'
   | 'PredictionParameters'
   | 'ExportProject'
   | null;

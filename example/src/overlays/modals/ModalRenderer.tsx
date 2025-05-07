@@ -5,7 +5,6 @@ import GeneralSettingsModalTemplate from './templates/GeneralSettingsModalTempla
 import AboutModalTemplate from './templates/AboutModalTemplate';
 import PredictionParametersModalTemplate from './templates/PredictionParametersModalTemplate';
 import ExportProjectModalTemplate from './templates/ExportProjectModalTemplate';
-import ConfirmPredictionInputBarModalTemplate from './templates/ConfirmPredictionInputBarModalTemplate';
 
 const ModalRenderer: React.FC = () => {
   const { activeModal, closeModal } = useAppContext();
@@ -14,8 +13,6 @@ const ModalRenderer: React.FC = () => {
     switch (activeModal) {
       case 'ExportProject':
         return <ExportProjectModalTemplate onClose={closeModal} />;
-      case 'ConfirmPredictionInputBar':
-        return <ConfirmPredictionInputBarModalTemplate onClose={closeModal} />;
       case 'PredictionParameters':
         return <PredictionParametersModalTemplate onClose={closeModal} />;
       case 'GeneralSettings':

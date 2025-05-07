@@ -12,6 +12,7 @@ interface CustomConfirmDialogProps {
   title: string;
   content: string;
   onClose: (confirmed: boolean) => void;
+  htmlContent?: React.ReactNode;
 }
 
 export default function CustomConfirmDialog({
@@ -19,12 +20,20 @@ export default function CustomConfirmDialog({
   title,
   content,
   onClose,
+  htmlContent,
 }: CustomConfirmDialogProps) {
+  const formattedContent = content.split('\n').map((line, index) => (
+    <span key={index}>
+      {line}
+      <br />
+    </span>
+  ));
   return (
     <Dialog open={open} onClose={() => onClose(false)} fullWidth maxWidth="sm">
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
-        <Typography>{content}</Typography>
+        {content && <Typography>{formattedContent}</Typography>}
+        {htmlContent}
       </DialogContent>
       <DialogActions>
         <Button

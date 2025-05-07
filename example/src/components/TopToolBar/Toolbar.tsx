@@ -17,10 +17,13 @@ import {
 } from '../../utils/fileUtils';
 import { getKekuleSmilesFromKetcher } from '../../utils/MoleculesUtils';
 import { startPrediction } from '../../utils/PredictionUtils';
+import ConfirmPredictionInputBaPartial from '../../overlays/dialogs/partials/ConfirmPredictionInputBarPartial';
+import { saveGeneralSettings } from '../../utils/SettingsUtils';
 
 const Toolbar: React.FC = () => {
   const {
     openAlert,
+    openConfirm,
     openModal,
     generalSettings,
     setSnackbarMessages,
@@ -50,8 +53,42 @@ const Toolbar: React.FC = () => {
       if (
         confirmOnInputSMILES !== undefined &&
         confirmOnInputSMILES.value === true
-      )
-        openModal('ConfirmPredictionInputBar');
+      ) {
+        openConfirm.current(
+          'Confirmation',
+          'The input bar contains a SMILES.\n\nAre you sure you want to start the prediction based on this molecule?',
+          () => {
+            saveGeneralSettings(generalSettings);
+
+            startPrediction(
+              predictionParameters,
+              setSnackbarMessages,
+              inputSmilesBar,
+            ).then((predResult) => {
+              if (!predResult) return;
+              if (!window.ketcher) return;
+
+              window.ketcher.setMolecule(predResult.smiles);
+
+              setSpectrumData(predResult.spectrum);
+            });
+          },
+          <ConfirmPredictionInputBaPartial />,
+        );
+      } else {
+        startPrediction(
+          predictionParameters,
+          setSnackbarMessages,
+          inputSmilesBar,
+        ).then((predResult) => {
+          if (!predResult) return;
+          if (!window.ketcher) return;
+
+          window.ketcher.setMolecule(predResult.smiles);
+
+          setSpectrumData(predResult.spectrum);
+        });
+      }
     } else {
       startPrediction(predictionParameters, setSnackbarMessages).then(
         (predResult) => {

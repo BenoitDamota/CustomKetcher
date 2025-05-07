@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { ModelParameters } from '../types/ModelParametersType';
 import { PredictionDataType } from '../types/PredictionDataType';
 import { SnackbarMessage } from '../types/SnackbarMessage';
@@ -8,27 +8,34 @@ const apiUrl = process.env.REACT_APP_INTERN_API_PATH || '';
 export const startPrediction = async (
   modelsParameters: ModelParameters,
   setSnackbarMessages: React.Dispatch<React.SetStateAction<SnackbarMessage>>,
+  smilesArg?: string,
 ): Promise<PredictionDataType | null> => {
   try {
-    if (!window.ketcher) {
-      console.error('Ketcher is not loaded.');
-      setSnackbarMessages({
-        severity: 'error',
-        message: 'Ketcher is not loaded.',
-      });
-      return null;
+    let smiles = smilesArg || '';
+
+    if (!smilesArg) {
+      if (!window.ketcher) {
+        console.error('Ketcher is not loaded.');
+        setSnackbarMessages({
+          severity: 'error',
+          message: 'Ketcher is not loaded.',
+        });
+        return null;
+      }
+
+      smiles = await window.ketcher.getSmiles();
+
+      if (!smiles) {
+        console.warn('No SMILES found in Ketcher.');
+        setSnackbarMessages({
+          severity: 'warning',
+          message: 'No molecules found in Ketcher.',
+        });
+        return null;
+      }
     }
 
-    const smiles = await window.ketcher.getSmiles();
-
-    if (!smiles) {
-      console.warn('No SMILES found in Ketcher.');
-      setSnackbarMessages({
-        severity: 'warning',
-        message: 'No molecules found in Ketcher.',
-      });
-      return null;
-    }
+    console.log(smiles);
 
     const modelParameters = modelsParameters.models.find(
       (model) => model.modelName === modelsParameters.currentModel,
@@ -56,8 +63,16 @@ export const startPrediction = async (
 
     return predictionData;
   } catch (error: unknown) {
-    if (error instanceof Error) {
-      console.error('Error during the prediction:', error.message);
+    if (error instanceof AxiosError) {
+      const errorData = error.response?.data.error;
+      if (errorData) {
+        console.error('Error during the prediction:', errorData);
+        setSnackbarMessages({
+          severity: 'error',
+          message: errorData,
+        });
+        return null;
+      }
     } else {
       console.error('Unknown error during the prediction:', error);
     }
