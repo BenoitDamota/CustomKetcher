@@ -42,7 +42,8 @@ interface Props {
 }
 
 const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
-  const { openAlert, spectrumData, plotlyRef } = useAppContext();
+  const { openAlert, spectrumData, plotlyRef, setSnackbarMessages } =
+    useAppContext();
 
   const [modebarContainerIsReady, setIsModebarContainerReady] = useState(false);
   const [regions, setRegions] = useState<SpectrumRegion[]>([]);
@@ -162,10 +163,11 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
           const ketcher = window.ketcher;
 
           if (!ketcher) {
-            openAlert.current(
-              'Error',
-              'Ketcher is not available, the associated atoms will not be shown in the editor',
-            );
+            setSnackbarMessages({
+              severity: 'error',
+              message:
+                'Ketcher is not available, the associated atoms will not be shown in the editor',
+            });
           } else {
             ketcher
               .layout()
@@ -178,10 +180,11 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
               })
               .catch((error) => {
                 console.error('Error during Ketcher layout:', error);
-                openAlert.current(
-                  'Error',
-                  'An error occurred while trying to layout the molecule.',
-                );
+                setSnackbarMessages({
+                  severity: 'error',
+                  message:
+                    'An error occurred while trying to layout the molecule.',
+                });
               });
           }
 
@@ -215,7 +218,7 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
     return () => {
       plotDiv.removeEventListener('click', handleClick);
     };
-  }, [autoZoomOnRegion, openAlert, plotlyRef, regions]);
+  }, [autoZoomOnRegion, openAlert, plotlyRef, regions, setSnackbarMessages]);
 
   const buildRegionLookup = (
     regions: SpectrumRegion[],

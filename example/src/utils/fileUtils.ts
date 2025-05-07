@@ -18,7 +18,7 @@ export interface ProjectFileParsedContentJSON {
 
 export interface LoadProjectFileResult {
   success: string;
-  errors: string[];
+  errors: string;
   data: ProjectFileParsedContentJSON;
 }
 
@@ -26,7 +26,7 @@ export interface LoadProjectFileResult {
 export function loadProjectFile(fileContent: string): LoadProjectFileResult {
   const result: LoadProjectFileResult = {
     success: '',
-    errors: [],
+    errors: '',
     data: {
       molecules: { format: '', data: '' },
       spectrum: [],
@@ -48,18 +48,17 @@ export function loadProjectFile(fileContent: string): LoadProjectFileResult {
         parsedContent.molecules.format === 'SMILES' &&
         parsedContent.molecules.data.includes('.')
       ) {
-        result.errors.push(
-          'Molecule data should only contain a single molecule (no dot allowed).',
-        );
+        result.errors =
+          'molecule data should only contain a single molecule (no dot allowed).';
       } else {
         result.success = `File loaded successfully! \n\n Molecule : ${parsedContent.molecules.data}`;
         result.data = parsedContent;
       }
     } else {
-      result.errors.push('Invalid JSON structure');
+      result.errors = 'invalid JSON structure.';
     }
   } catch (error) {
-    result.errors.push('Failed to parse JSON');
+    result.errors = 'failed to parse JSON.';
   }
 
   return result;
@@ -107,28 +106,4 @@ export function convertProjectToJSON(
   } as ProjectFileParsedContentJSON;
 
   return JSON.stringify(parsedContent, null, 2);
-}
-
-// Function to download a project in JSON format
-export function downloadProjectFileToJSON(
-  moleculesFormat: string,
-  moleculesData: string,
-  spectrumData: SpectrumDataPoint[],
-): void {
-  const jsonContent = convertProjectToJSON(
-    moleculesFormat,
-    moleculesData,
-    spectrumData,
-  );
-
-  const blob = new Blob([jsonContent], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = 'project_output.json';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
 }

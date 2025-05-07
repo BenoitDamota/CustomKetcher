@@ -14,7 +14,7 @@ const Overlays: React.FC = () => {
       {snackbarMessages.message && (
         <Snackbar
           open={!!snackbarMessages.message}
-          autoHideDuration={3500}
+          autoHideDuration={5000}
           onClose={() =>
             setSnackbarMessages({
               severity: undefined,

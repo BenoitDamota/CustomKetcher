@@ -28,7 +28,7 @@ const exportJSON = async (
   { data: string; blob: Blob; filename: string } | { error: string }
 > => {
   try {
-    if (!window.ketcher || typeof window.ketcher.getSmiles !== 'function') {
+    if (!window.ketcher) {
       throw new Error('Ketcher is not available.');
     }
 
@@ -41,11 +41,10 @@ const exportJSON = async (
     }
 
     const json = convertProjectToJSON('SMILES', smiles, spectrumData);
-    const jsonString = JSON.stringify(json, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
+    const blob = new Blob([json], { type: 'application/json' });
 
     return {
-      data: jsonString,
+      data: json,
       blob,
       filename: 'export_project.json',
     };
@@ -53,16 +52,21 @@ const exportJSON = async (
     if (err instanceof Error) {
       return { error: err.message };
     }
-    return { error: 'Erreur inconnue lors de la génération du JSON.' };
+    return { error: 'An unknown error occurred while generating the JSON.' };
   }
 };
 
 const exportIMG = async (
+  spectrumData: SpectrumDataPoint[],
   getSpectrumImage: (() => Promise<string | null>) | undefined,
 ): Promise<
   { data: string; blob: Blob; filename: string } | { error: string }
 > => {
   try {
+    if (spectrumData && spectrumData.length === 0) {
+      throw new Error('No spectrum data loaded');
+    }
+
     if (getSpectrumImage === undefined)
       throw new Error(
         'The function to generate the spectrum image is not initialized',
@@ -146,7 +150,7 @@ const ExportProjectModalTemplate: React.FC<Props> = ({ onClose }) => {
       } else if (exportType === 'image') {
         setPreviewData('');
 
-        const result = await exportIMG(getSpectrumImage);
+        const result = await exportIMG(spectrumData, getSpectrumImage);
         if ('error' in result) {
           setError(result.error);
           setPreviewData('');

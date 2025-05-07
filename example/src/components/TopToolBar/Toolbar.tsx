@@ -10,25 +10,21 @@ import {
   Stack,
 } from '@mui/material';
 import {
-  downloadProjectFileToJSON,
   loadProjectFile,
   openFileInput,
   ProjectFileParsedContentJSON,
 } from '../../utils/fileUtils';
-import { getKekuleSmilesFromKetcher } from '../../utils/MoleculesUtils';
 import { startPrediction } from '../../utils/PredictionUtils';
-import ConfirmPredictionInputBaPartial from '../../overlays/dialogs/partials/ConfirmPredictionInputBarPartial';
 import { saveGeneralSettings } from '../../utils/SettingsUtils';
+import DontShowAgainPartial from '../../overlays/dialogs/partials/DontShowAgainPartial';
 
 const Toolbar: React.FC = () => {
   const {
-    openAlert,
     openConfirm,
     openModal,
     generalSettings,
     setSnackbarMessages,
     predictionParameters,
-    spectrumData,
     setSpectrumData,
   } = useAppContext();
 
@@ -73,7 +69,10 @@ const Toolbar: React.FC = () => {
               setSpectrumData(predResult.spectrum);
             });
           },
-          <ConfirmPredictionInputBaPartial />,
+          <DontShowAgainPartial
+            settingsCategory="General"
+            settingsKey={'confirmOnInputSMILES'}
+          />,
         );
       } else {
         startPrediction(
@@ -109,7 +108,6 @@ const Toolbar: React.FC = () => {
       const result = loadProjectFile(fileContent);
 
       if (result.success) {
-        openAlert.current('Load Project File', result.success);
         const data: ProjectFileParsedContentJSON = result.data;
 
         const moleculeFormat = data.molecules.format;
@@ -120,40 +118,71 @@ const Toolbar: React.FC = () => {
           setSpectrumData(spectrum);
           window.ketcher?.setMolecule(moleculeData);
         }
+        setSnackbarMessages({
+          severity: 'success',
+          message: `Project file successfuly loaded ${
+            moleculeFormat === 'SMILES' ? ` : ${moleculeData}` : ''
+          }`,
+        });
       }
 
-      if (result.errors.length > 0) {
-        const errorsStr = result.errors.join(',');
-        openAlert.current('Failed To Load Project File', errorsStr);
+      if (result.errors) {
+        setSnackbarMessages({
+          severity: 'error',
+          message: `Failed to load project file : ${result.errors}`,
+        });
       }
     });
   }
 
-  function handleSaveAs() {
-    if (!window.ketcher) {
-      openAlert.current('Error When Saving', 'Could not find Ketcher!');
-      return;
+  const handleClearProject = () => {
+    const confirmOnClear = generalSettings
+      .find((category) => category.settingsCategoryName === 'General')
+      ?.settings.find((setting) => setting.key === 'confirmOnClear');
+    if (confirmOnClear !== undefined && confirmOnClear.value === true) {
+      openConfirm.current(
+        'Confirmation',
+        'This action will permanently remove all molecule sketches and spectrum data.\n\nAre you sure you want to proceed?',
+        () => {
+          if (!window.ketcher) {
+            setSnackbarMessages({
+              severity: 'error',
+              message: 'Failed to clear project: Ketcher instance not found.',
+            });
+            return;
+          }
+
+          window.ketcher.editor.clear();
+          setSpectrumData([]);
+
+          setSnackbarMessages({
+            severity: 'success',
+            message: 'Successfully cleared the current project',
+          });
+        },
+        <DontShowAgainPartial
+          settingsCategory="General"
+          settingsKey="confirmOnClear"
+        />,
+      );
+    } else {
+      if (!window.ketcher) {
+        setSnackbarMessages({
+          severity: 'error',
+          message: 'Failed to clear project: Ketcher instance not found.',
+        });
+        return;
+      }
+
+      window.ketcher.editor.clear();
+      setSpectrumData([]);
+
+      setSnackbarMessages({
+        severity: 'success',
+        message: 'Successfully cleared the current project',
+      });
     }
-
-    getKekuleSmilesFromKetcher(setSnackbarMessages).then(
-      (smiles: string | null) => {
-        if (!smiles) {
-          openAlert.current(
-            'Error When Saving',
-            'No molecule in SMILES format obtained from Ketcher',
-          );
-          return;
-        }
-
-        downloadProjectFileToJSON('SMILES', smiles, spectrumData);
-
-        openAlert.current(
-          'Saving',
-          'File saved successfully as project_output.json',
-        );
-      },
-    );
-  }
+  };
 
   return (
     <nav
@@ -240,18 +269,18 @@ const Toolbar: React.FC = () => {
           {!isBelow700 && (
             <>
               <button
-                title="Save As"
-                onClick={handleSaveAs}
-                className="material-symbols-outlined"
-              >
-                save_as
-              </button>
-              <button
                 title="Export"
                 onClick={() => openModal('ExportProject')}
                 className="material-symbols-outlined"
               >
                 file_export
+              </button>
+              <button
+                title="Clear Project"
+                onClick={handleClearProject}
+                className="material-symbols-outlined"
+              >
+                scan_delete
               </button>
             </>
           )}
@@ -264,18 +293,6 @@ const Toolbar: React.FC = () => {
       >
         <Stack direction="column" spacing={1} padding={1}>
           <MenuItem
-            onClick={handleSaveAs}
-            title="Save As"
-            sx={{
-              justifyContent: 'center',
-              '&:hover': {
-                color: '#188794',
-              },
-            }}
-          >
-            <span className="material-symbols-outlined">save_as</span>
-          </MenuItem>
-          <MenuItem
             onClick={() => openModal('ExportProject')}
             title="Export"
             sx={{
@@ -286,6 +303,18 @@ const Toolbar: React.FC = () => {
             }}
           >
             <span className="material-symbols-outlined">file_export</span>
+          </MenuItem>
+          <MenuItem
+            onClick={handleClearProject}
+            title="Clear Project"
+            sx={{
+              justifyContent: 'center',
+              '&:hover': {
+                color: '#188794',
+              },
+            }}
+          >
+            <span className="material-symbols-outlined">scan_delete</span>
           </MenuItem>
         </Stack>
       </Menu>
