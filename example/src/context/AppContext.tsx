@@ -1,13 +1,14 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { GeneralSettings } from '../types/GeneralSettingsType';
 import { ModelParameters } from '../types/ModelParametersType';
-import { SpectrumDataPoint } from '../types/SpectrumDataType';
 
 import {
   loadGeneralSettings,
   loadModelParameters,
 } from '../utils/SettingsUtils';
 import { SnackbarMessage } from '../types/SnackbarMessage';
+import { TabDataType } from '../types/TabDataType';
+import { getKekuleSmilesFromKetcher } from '../utils/MoleculesUtils';
 
 type ModalName =
   | 'GeneralSettings'
@@ -25,8 +26,12 @@ type AppContextType = {
   setPredictionParameters: React.Dispatch<
     React.SetStateAction<ModelParameters>
   >;
-  spectrumData: SpectrumDataPoint[];
-  setSpectrumData: React.Dispatch<React.SetStateAction<SpectrumDataPoint[]>>;
+  tabs: React.MutableRefObject<TabDataType[]>;
+  activeTab: number;
+  changeTab: (newTabId: number) => Promise<void>;
+  clearActiveTab: () => void;
+  newTab: (data: Omit<TabDataType, 'id'>) => void;
+  closeTab: (tabId: number) => void;
   openAlert: React.MutableRefObject<(title: string, content: string) => void>;
   openConfirm: React.MutableRefObject<
     (
@@ -43,6 +48,7 @@ type AppContextType = {
   setSnackbarMessages: React.Dispatch<React.SetStateAction<SnackbarMessage>>;
   getSpectrumImage?: () => Promise<string | null>;
   setGetSpectrumImage: (fn: () => Promise<string | null>) => void;
+  renderVersion: number;
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -50,6 +56,11 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const ketcherRef = useRef<unknown>(null);
   const plotlyRef = useRef<Plotly.PlotlyHTMLElement | null>(null);
+
+  const [snackbarMessages, setSnackbarMessages] = useState<SnackbarMessage>({
+    severity: undefined,
+    message: '',
+  });
 
   const openAlert = useRef<(title: string, content: string) => void>(() => {
     // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -60,7 +71,126 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     // eslint-disable-next-line @typescript-eslint/no-empty-function
   });
 
-  const [spectrumData, setSpectrumData] = useState<SpectrumDataPoint[]>([]);
+  const tabs = useRef<TabDataType[]>([
+    {
+      id: 1,
+      smiles: '',
+      spectrum: [],
+    },
+  ]);
+
+  const nextTabId = useRef(2);
+
+  const [activeTab, setActiveTab] = useState<number>(1);
+
+  const [renderVersion, forceRender] = useState(0);
+
+  const rerender = () => forceRender((v) => v + 1);
+
+  const changeTab = async (newTabId: number) => {
+    if (newTabId === activeTab) return;
+
+    const tabIndex = tabs.current.findIndex((tab) => tab.id === newTabId);
+    if (tabIndex === -1) return;
+
+    const lastActiveTab = activeTab;
+    const lastActiveTabIndex = tabs.current.findIndex(
+      (tab) => tab.id === lastActiveTab,
+    );
+
+    if (!window.ketcher) {
+      setSnackbarMessages({
+        severity: 'error',
+        message: 'Could not find Ketcher when switching tabs',
+      });
+      return;
+    }
+
+    let currentSmiles: string | null = await window.ketcher.getSmiles();
+    if (currentSmiles) {
+      currentSmiles = await getKekuleSmilesFromKetcher(setSnackbarMessages);
+    }
+    if (currentSmiles === null) {
+      setSnackbarMessages({
+        severity: 'error',
+        message: 'Could not obtain the SMILES of the current tab',
+      });
+      return;
+    }
+
+    if (lastActiveTabIndex !== -1) {
+      tabs.current[lastActiveTabIndex].smiles = currentSmiles;
+    }
+
+    setActiveTab(newTabId);
+    const activeSmile = tabs.current[tabIndex]?.smiles || '';
+    await window.ketcher.setMolecule(activeSmile);
+    rerender();
+  };
+
+  const clearActiveTab = () => {
+    const tabIndex = tabs.current.findIndex((tab) => tab.id === activeTab);
+    if (tabIndex === -1) return;
+
+    tabs.current[tabIndex] = {
+      ...tabs.current[tabIndex],
+      smiles: '',
+      spectrum: [],
+    };
+    rerender();
+  };
+
+  const newTab = async (data: Omit<TabDataType, 'id'>) => {
+    const newTab: TabDataType = {
+      ...data,
+      id: nextTabId.current++,
+    };
+
+    tabs.current.push(newTab);
+    await changeTab(newTab.id);
+    rerender();
+  };
+
+  const closeTab = async (tabId: number) => {
+    if (!window.ketcher) {
+      setSnackbarMessages({
+        severity: 'error',
+        message: 'Could not find Ketcher when opening a new tab',
+      });
+      return;
+    }
+
+    const tabIndex = tabs.current.findIndex((tab) => tab.id === tabId);
+    if (tabIndex === -1) return;
+
+    tabs.current.splice(tabIndex, 1);
+
+    if (tabs.current.length === 0) {
+      const emptyTab = { id: nextTabId.current++, smiles: '', spectrum: [] };
+      tabs.current = [emptyTab];
+      setActiveTab(emptyTab.id);
+      await window.ketcher.setMolecule('');
+      rerender();
+      return;
+    }
+
+    const isActiveClosed = activeTab === tabId;
+    let newActiveTabId = activeTab;
+
+    if (isActiveClosed) {
+      const newTab =
+        tabs.current[tabIndex] || tabs.current[tabs.current.length - 1];
+      newActiveTabId = newTab.id;
+    }
+
+    setActiveTab(newActiveTabId);
+    const newActiveTab = tabs.current.find((tab) => tab.id === newActiveTabId);
+    if (newActiveTab) {
+      await window.ketcher.setMolecule(newActiveTab.smiles || '');
+    }
+
+    rerender();
+  };
 
   const [generalSettings, setGeneralSettings] = useState<GeneralSettings>([]);
 
@@ -75,11 +205,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     setActiveModal(name);
   };
   const closeModal = () => setActiveModal(null);
-
-  const [snackbarMessages, setSnackbarMessages] = useState<SnackbarMessage>({
-    severity: undefined,
-    message: '',
-  });
 
   const [getSpectrumImage, setGetSpectrumImage] = useState<
     () => Promise<string | null>
@@ -180,8 +305,12 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         setGeneralSettings,
         predictionParameters,
         setPredictionParameters,
-        spectrumData,
-        setSpectrumData,
+        tabs,
+        activeTab,
+        changeTab,
+        newTab,
+        clearActiveTab,
+        closeTab,
         openAlert,
         openConfirm,
         openModal,
@@ -191,6 +320,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         setSnackbarMessages,
         getSpectrumImage,
         setGetSpectrumImage,
+        renderVersion,
       }}
     >
       {children}

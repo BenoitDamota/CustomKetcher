@@ -15,6 +15,7 @@ import { SpectrumDataPoint } from '../../../types/SpectrumDataType';
 import { useAppContext } from '../../../context/AppContext';
 import { getKekuleSmilesFromKetcher } from '../../../utils/MoleculesUtils';
 import { SnackbarMessage } from '../../../types/SnackbarMessage';
+import { TabDataType } from '../../../types/TabDataType';
 
 interface Props {
   onClose: () => void;
@@ -88,7 +89,7 @@ const exportIMG = async (
 };
 
 const ExportProjectModalTemplate: React.FC<Props> = ({ onClose }) => {
-  const { spectrumData, plotlyRef, setSnackbarMessages } = useAppContext();
+  const { plotlyRef, setSnackbarMessages, tabs, activeTab } = useAppContext();
 
   const [exportType, setExportType] = useState<'json' | 'image'>('json');
   const [previewData, setPreviewData] = useState<string>('');
@@ -134,6 +135,17 @@ const ExportProjectModalTemplate: React.FC<Props> = ({ onClose }) => {
         React.SetStateAction<SnackbarMessage>
       >,
     ) => {
+      const currentTab: TabDataType | undefined = tabs.current.find(
+        (tab) => tab.id === activeTab,
+      );
+
+      if (!currentTab) {
+        setError('Could not find the current tab data');
+        return;
+      }
+
+      const spectrumData: SpectrumDataPoint[] = currentTab.spectrum;
+
       setError(null);
       if (exportType === 'json') {
         const result = await exportJSON(spectrumData, setSnackbarMessages);
@@ -163,7 +175,7 @@ const ExportProjectModalTemplate: React.FC<Props> = ({ onClose }) => {
         setFilename(filename);
       }
     },
-    [exportType, spectrumData, getSpectrumImage],
+    [tabs, exportType, activeTab, getSpectrumImage],
   );
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
 import Plot from 'react-plotly.js';
 import MinimizeButton from './MinimizeRightPanButton';
@@ -42,14 +42,26 @@ interface Props {
 }
 
 const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
-  const { openAlert, spectrumData, plotlyRef, setSnackbarMessages } =
-    useAppContext();
+  const {
+    openAlert,
+    plotlyRef,
+    setSnackbarMessages,
+    tabs,
+    activeTab,
+    renderVersion,
+  } = useAppContext();
 
   const [modebarContainerIsReady, setIsModebarContainerReady] = useState(false);
   const [regions, setRegions] = useState<SpectrumRegion[]>([]);
   const [autoZoomOnRegion, setAutoZoomOnRegion] = useState<boolean>(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const spectrumData = useMemo(() => {
+    return (tabs.current.find((tab) => tab.id === activeTab)?.spectrum ||
+      []) as SpectrumDataPoint[];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, tabs, renderVersion]);
 
   const [layout, _] = useState({
     autosize: true,

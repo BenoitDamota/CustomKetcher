@@ -35,8 +35,6 @@ export const startPrediction = async (
       }
     }
 
-    console.log(smiles);
-
     const modelParameters = modelsParameters.models.find(
       (model) => model.modelName === modelsParameters.currentModel,
     );

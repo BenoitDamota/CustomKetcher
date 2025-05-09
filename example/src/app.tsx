@@ -6,6 +6,7 @@ import { CssBaseline } from '@mui/material';
 
 import './style/style.css';
 import Overlays from './overlays/Overlays';
+import TabBar from './components/TabBar';
 
 const theme = createTheme({
   palette: {
@@ -31,9 +32,11 @@ function App() {
               flexDirection: 'column',
               height: '100%',
               width: '100%',
+              backgroundColor: '#FCFCFC',
             }}
           >
             <Toolbar />
+            <TabBar />
             <ResizableLayout />
           </div>
         </ThemeProvider>

@@ -25,7 +25,9 @@ const Toolbar: React.FC = () => {
     generalSettings,
     setSnackbarMessages,
     predictionParameters,
-    setSpectrumData,
+    tabs,
+    newTab,
+    clearActiveTab,
   } = useAppContext();
 
   const isBelow850 = useMediaQuery('(max-width:850px)');
@@ -40,6 +42,12 @@ const Toolbar: React.FC = () => {
   const openSettingsMenu = Boolean(anchorElSettings);
 
   const [inputSmilesBar, setInputSmilesBar] = useState('');
+
+  const hideTabBarWhenSingleTab =
+    (generalSettings
+      .find((cat) => cat.settingsCategoryName === 'General')
+      ?.settings.find((setting) => setting.key === 'hideTabBarWhenSingleTab')
+      ?.value as boolean) || false;
 
   function handlePrediction() {
     if (inputSmilesBar) {
@@ -62,11 +70,11 @@ const Toolbar: React.FC = () => {
               inputSmilesBar,
             ).then((predResult) => {
               if (!predResult) return;
-              if (!window.ketcher) return;
 
-              window.ketcher.setMolecule(predResult.smiles);
-
-              setSpectrumData(predResult.spectrum);
+              newTab({
+                smiles: predResult.smiles,
+                spectrum: predResult.spectrum,
+              });
             });
           },
           <DontShowAgainPartial
@@ -83,9 +91,10 @@ const Toolbar: React.FC = () => {
           if (!predResult) return;
           if (!window.ketcher) return;
 
-          window.ketcher.setMolecule(predResult.smiles);
-
-          setSpectrumData(predResult.spectrum);
+          newTab({
+            smiles: predResult.smiles,
+            spectrum: predResult.spectrum,
+          });
         });
       }
     } else {
@@ -94,9 +103,10 @@ const Toolbar: React.FC = () => {
           if (!predResult) return;
           if (!window.ketcher) return;
 
-          window.ketcher.setMolecule(predResult.smiles);
-
-          setSpectrumData(predResult.spectrum);
+          newTab({
+            smiles: predResult.smiles,
+            spectrum: predResult.spectrum,
+          });
         },
       );
     }
@@ -112,11 +122,13 @@ const Toolbar: React.FC = () => {
 
         const moleculeFormat = data.molecules.format;
         const moleculeData = data.molecules.data;
-        const spectrum = data.spectrum;
+        const spectrumData = data.spectrum;
 
-        if (moleculeFormat === 'SMILES' || moleculeFormat === 'MOL') {
-          setSpectrumData(spectrum);
-          window.ketcher?.setMolecule(moleculeData);
+        if (moleculeFormat === 'SMILES') {
+          newTab({
+            smiles: moleculeData,
+            spectrum: spectrumData,
+          });
         }
         setSnackbarMessages({
           severity: 'success',
@@ -153,7 +165,7 @@ const Toolbar: React.FC = () => {
           }
 
           window.ketcher.editor.clear();
-          setSpectrumData([]);
+          clearActiveTab();
 
           setSnackbarMessages({
             severity: 'success',
@@ -175,7 +187,7 @@ const Toolbar: React.FC = () => {
       }
 
       window.ketcher.editor.clear();
-      setSpectrumData([]);
+      clearActiveTab();
 
       setSnackbarMessages({
         severity: 'success',
@@ -194,7 +206,10 @@ const Toolbar: React.FC = () => {
         justifyContent: 'space-between',
         width: '100%',
         height: '57px',
-        borderBottom: 'solid #525252 3px',
+        borderBottom:
+          hideTabBarWhenSingleTab && tabs.current.length <= 1
+            ? 'solid #525252 3px'
+            : 'none',
         paddingInline: '16px',
         position: 'relative',
       }}
