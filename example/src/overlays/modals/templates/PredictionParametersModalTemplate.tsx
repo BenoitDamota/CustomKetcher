@@ -165,6 +165,14 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({
   };
 
   const handleUseModel = () => {
+    if (!selectedModel) {
+      setSnackbarMessages({
+        severity: 'warning',
+        message: 'Please select a model before proceeding.',
+      });
+      return;
+    }
+
     const newParameters = {
       ...predictionParameters,
       currentModel: selectedModel,
