@@ -14,6 +14,7 @@ import {
   Snackbar,
   Alert,
   Stack,
+  Typography,
 } from '@mui/material';
 import { useAppContext } from '../../../context/AppContext';
 import { saveModelParameters } from '../../../utils/SettingsUtils';
@@ -27,8 +28,12 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({
   onClose,
   timeoutRef,
 }) => {
-  const { predictionParameters, setPredictionParameters, setSnackbarMessages } =
-    useAppContext();
+  const {
+    predictionParameters,
+    setPredictionParameters,
+    setSnackbarMessages,
+    openModal,
+  } = useAppContext();
 
   const [selectedModel, setSelectedModel] = useState<string>('');
   const [modelValues, setModelValues] = useState<{
@@ -44,8 +49,16 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({
   )?.endpoint;
 
   useEffect(() => {
-    setSelectedModel(predictionParameters.currentModel);
-  }, [predictionParameters.currentModel]);
+    const modelExists = predictionParameters.models.some(
+      (model) => model.modelName === predictionParameters.currentModel,
+    );
+
+    if (!modelExists) {
+      setSelectedModel('');
+    } else {
+      setSelectedModel(predictionParameters.currentModel);
+    }
+  }, [predictionParameters.currentModel, predictionParameters.models]);
 
   useEffect(() => {
     const selectedModelParams = predictionParameters.models.find(
@@ -75,7 +88,12 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({
   }, [predictionParameters, selectedModel]);
 
   const handleModelChange = (event: SelectChangeEvent<string>) => {
-    setSelectedModel(event.target.value);
+    const value = event.target.value;
+    if (value === '__manage__') {
+      openModal('ManagePredictionModels');
+    } else {
+      setSelectedModel(value);
+    }
   };
 
   const handleInputChange =
@@ -173,6 +191,10 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({
       return;
     }
 
+    if (!validateRequiredFields()) {
+      return;
+    }
+
     const newParameters = {
       ...predictionParameters,
       currentModel: selectedModel,
@@ -233,6 +255,27 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({
           label="Choose Prediction A Model *"
           onChange={handleModelChange}
         >
+          <MenuItem value="__manage__">
+            <span style={{ display: 'flex', alignItems: 'center' }}>
+              <span
+                className="material-symbols-outlined"
+                style={{ marginRight: 8 }}
+              >
+                edit_note
+              </span>
+              Manage Prediction Models
+            </span>
+          </MenuItem>
+
+          <MenuItem disabled>
+            <div
+              style={{
+                borderTop: '1px solid #ccc',
+                width: '100%',
+              }}
+            />
+          </MenuItem>
+
           {predictionParameters.models.map((model) => (
             <MenuItem key={model.modelName} value={model.modelName}>
               {model.modelName === predictionParameters.currentModel ? (
@@ -271,71 +314,79 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({
           <Divider style={{ margin: '1rem 0px', backgroundColor: '#cccccc' }} />
 
           {/* Dynamic Parameters */}
-          {predictionParameters.models
-            .find((model) => model.modelName === selectedModel)
-            ?.parameters.map((param, index) => {
-              const fieldId = `${selectedModel}-${param.key}`;
-              const errorMessage = errorMessages[param.key];
-              if (param.type === 'boolean') {
-                return (
-                  <FormControlLabel
-                    key={index}
-                    control={
-                      <Switch
-                        checked={
-                          (modelValues[param.key] as boolean) !== undefined
-                            ? (modelValues[param.key] as boolean)
-                            : false
-                        }
-                        onChange={handleSwitchChange(param.key)}
-                        name={param.key}
-                        color="primary"
-                      />
-                    }
-                    label={
-                      <>
-                        {param.label}
-                        {param.required && (
-                          <span
-                            style={{ color: 'red', verticalAlign: 'middle' }}
-                          >
-                            {' *'}
-                          </span>
-                        )}
-                      </>
-                    }
-                  />
-                );
-              } else {
-                return (
-                  <TextField
-                    key={index}
-                    id={fieldId}
-                    label={
-                      <>
-                        {param.label}
-                        {param.required && (
-                          <span
-                            style={{ color: 'red', verticalAlign: 'middle' }}
-                          >
-                            {' *'}
-                          </span>
-                        )}
-                      </>
-                    }
-                    type={param.type}
-                    value={modelValues[param.key] || ''}
-                    onChange={handleInputChange(param.key)}
-                    fullWidth
-                    margin="normal"
-                    error={!!errorMessage}
-                    helperText={
-                      errorMessage ? `Fil the field : ${errorMessage}` : ''
-                    }
-                  />
-                );
-              }
-            })}
+          {predictionParameters.models.find(
+            (model) => model.modelName === selectedModel,
+          )?.parameters.length === 0 ? (
+            <Typography variant="body1" color="textSecondary">
+              No parameters
+            </Typography>
+          ) : (
+            predictionParameters.models
+              .find((model) => model.modelName === selectedModel)
+              ?.parameters.map((param, index) => {
+                const fieldId = `${selectedModel}-${param.key}`;
+                const errorMessage = errorMessages[param.key];
+                if (param.type === 'boolean') {
+                  return (
+                    <FormControlLabel
+                      key={index}
+                      control={
+                        <Switch
+                          checked={
+                            (modelValues[param.key] as boolean) !== undefined
+                              ? (modelValues[param.key] as boolean)
+                              : false
+                          }
+                          onChange={handleSwitchChange(param.key)}
+                          name={param.key}
+                          color="primary"
+                        />
+                      }
+                      label={
+                        <>
+                          {param.label}
+                          {param.required && (
+                            <span
+                              style={{ color: 'red', verticalAlign: 'middle' }}
+                            >
+                              {' *'}
+                            </span>
+                          )}
+                        </>
+                      }
+                    />
+                  );
+                } else {
+                  return (
+                    <TextField
+                      key={index}
+                      id={fieldId}
+                      label={
+                        <>
+                          {param.label}
+                          {param.required && (
+                            <span
+                              style={{ color: 'red', verticalAlign: 'middle' }}
+                            >
+                              {' *'}
+                            </span>
+                          )}
+                        </>
+                      }
+                      type={param.type}
+                      value={modelValues[param.key] || ''}
+                      onChange={handleInputChange(param.key)}
+                      fullWidth
+                      margin="normal"
+                      error={!!errorMessage}
+                      helperText={
+                        errorMessage ? `Fil the field : ${errorMessage}` : ''
+                      }
+                    />
+                  );
+                }
+              })
+          )}
         </>
       )}
 

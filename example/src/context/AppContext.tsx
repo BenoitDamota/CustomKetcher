@@ -14,6 +14,7 @@ type ModalName =
   | 'OpenProject'
   | 'ExportProject'
   | 'PredictionParameters'
+  | 'ManagePredictionModels'
   | 'GeneralSettings'
   | 'About'
   | null;

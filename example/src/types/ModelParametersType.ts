@@ -1,7 +1,7 @@
 export interface ModelParameterType {
   key: string;
   label: string;
-  type: 'text' | 'number' | 'select' | 'boolean';
+  type: 'text' | 'number' | 'boolean';
   required: boolean;
   options?: string[];
   default?: string | number | boolean;

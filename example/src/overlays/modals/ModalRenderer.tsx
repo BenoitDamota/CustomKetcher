@@ -6,6 +6,7 @@ import AboutModalTemplate from './templates/AboutModalTemplate';
 import PredictionParametersModalTemplate from './templates/PredictionParametersModalTemplate';
 import ExportProjectModalTemplate from './templates/ExportProjectModalTemplate';
 import OpenProjectModalTemplate from './templates/OpenProjectModalTemplate';
+import ManagePredictionModelsModal from './templates/ManagePredictionModelsModalTemplate';
 
 const ModalRenderer: React.FC = () => {
   const { activeModal, closeModal } = useAppContext();
@@ -18,6 +19,8 @@ const ModalRenderer: React.FC = () => {
         return <ExportProjectModalTemplate onClose={closeModal} />;
       case 'PredictionParameters':
         return <PredictionParametersModalTemplate onClose={closeModal} />;
+      case 'ManagePredictionModels':
+        return <ManagePredictionModelsModal />;
       case 'GeneralSettings':
         return <GeneralSettingsModalTemplate onClose={closeModal} />;
       case 'About':

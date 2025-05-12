@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { Dialog, DialogTitle, DialogContent } from '@mui/material';
+import { useAppContext } from '../../context/AppContext';
 
 interface ModalTemplateProps {
   children: React.ReactNode;
@@ -7,6 +8,8 @@ interface ModalTemplateProps {
 }
 
 const ModalTemplate: React.FC<ModalTemplateProps> = ({ children, onClose }) => {
+  const { activeModal } = useAppContext();
+
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const customOnClose = () => {
@@ -17,7 +20,12 @@ const ModalTemplate: React.FC<ModalTemplateProps> = ({ children, onClose }) => {
   };
 
   return (
-    <Dialog open onClose={customOnClose} fullWidth maxWidth="sm">
+    <Dialog
+      open
+      onClose={customOnClose}
+      fullWidth
+      maxWidth={activeModal === 'ManagePredictionModels' ? 'md' : 'sm'}
+    >
       <DialogTitle>
         <button
           onClick={customOnClose}
