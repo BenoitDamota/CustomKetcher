@@ -226,6 +226,7 @@ const ManagePredictionModelsModal: React.FC = () => {
                   borderRadius: 2,
                   p: 2,
                   backgroundColor: '#f9f9f9',
+                  mb: 2,
                 }}
               >
                 {/* First Row */}
