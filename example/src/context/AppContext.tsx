@@ -85,7 +85,27 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   const [renderVersion, forceRender] = useState(0);
 
+  const [generalSettings, setGeneralSettings] = useState<GeneralSettings>([]);
+
+  const [predictionParameters, setPredictionParameters] =
+    useState<ModelParameters>({
+      currentModel: '',
+      models: [],
+    });
+
+  const [activeModal, setActiveModal] = useState<ModalName>(null);
+  const openModal = (name: ModalName) => {
+    setActiveModal(name);
+  };
+  const closeModal = () => setActiveModal(null);
+
+  const [getSpectrumImage, setGetSpectrumImage] = useState<
+    () => Promise<string | null>
+  >(() => async () => null);
+
   const rerender = () => forceRender((v) => v + 1);
+
+  useEffect(() => rerender(), [generalSettings]);
 
   const changeTab = async (newTabId: number) => {
     if (newTabId === activeTab) return;
@@ -191,24 +211,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
     rerender();
   };
-
-  const [generalSettings, setGeneralSettings] = useState<GeneralSettings>([]);
-
-  const [predictionParameters, setPredictionParameters] =
-    useState<ModelParameters>({
-      currentModel: '',
-      models: [],
-    });
-
-  const [activeModal, setActiveModal] = useState<ModalName>(null);
-  const openModal = (name: ModalName) => {
-    setActiveModal(name);
-  };
-  const closeModal = () => setActiveModal(null);
-
-  const [getSpectrumImage, setGetSpectrumImage] = useState<
-    () => Promise<string | null>
-  >(() => async () => null);
 
   useEffect(() => {
     let isMounted = true;

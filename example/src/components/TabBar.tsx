@@ -6,24 +6,32 @@ import { Box, IconButton, Menu, MenuItem } from '@mui/material';
 const TabBar: React.FC = () => {
   const { tabs, activeTab, changeTab, closeTab, generalSettings } =
     useAppContext();
+
   const containerRef = useRef<HTMLDivElement>(null);
   const [maxVisibleTabs, setMaxVisibleTabs] = useState<number>(
     tabs.current.length,
   );
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
 
-  const hideTabBarWhenSingleTab =
-    (generalSettings
-      .find((cat) => cat.settingsCategoryName === 'Generalv')
-      ?.settings.find((setting) => setting.key === 'hideTabBarWhenSingleTab')
-      ?.value as boolean) || false;
+  const generalCategory = generalSettings.find(
+    (cat) => cat.settingsCategoryName === 'General',
+  );
+  const hideTabBarWhenSingleTab = Boolean(
+    generalCategory?.settings.find(
+      (setting) => setting.key === 'hideTabBarWhenSingleTab',
+    )?.value,
+  );
 
   useEffect(() => {
     const updateVisibleTabs = () => {
       const containerWidth = containerRef.current?.offsetWidth || 0;
       const approxTabWidth = 108;
       const reservedSpace = 50;
-      const max = Math.floor((containerWidth - reservedSpace) / approxTabWidth);
+      const max = Math.max(
+        1,
+        Math.floor((containerWidth - reservedSpace) / approxTabWidth),
+      );
+
       setMaxVisibleTabs(max);
     };
 
@@ -53,7 +61,7 @@ const TabBar: React.FC = () => {
             alignItems: 'flex-end',
             gap: 1,
             marginTop: '3px',
-            borderBottom: '3px solid #167782',
+            borderBottom: '3px solid #525252',
             overflow: 'hidden',
           }}
         >
@@ -76,7 +84,7 @@ const TabBar: React.FC = () => {
                     display: 'flex',
                     minWidth: '100px',
                     paddingInline: 1,
-                    bgcolor: isActive ? '#167782' : '#d9d9d9',
+                    bgcolor: isActive ? '#525252' : '#d9d9d9',
                     borderRadius: '4px',
                     borderTopLeftRadius:
                       isActive && index === 0 ? '0px' : 'auto',
@@ -136,11 +144,11 @@ const TabBar: React.FC = () => {
                         key={tab.id}
                         sx={{
                           backgroundColor:
-                            tab.id === activeTab ? '#167782' : 'transparent',
+                            tab.id === activeTab ? '#525252 ' : 'transparent',
                           color: tab.id === activeTab ? '#fff' : 'initial',
                           '&:hover': {
                             backgroundColor:
-                              tab.id === activeTab ? '#125e69' : '#f0f0f0',
+                              tab.id === activeTab ? '#474747' : '#f0f0f0',
                             color: tab.id === activeTab ? '#fff' : 'inherit',
                           },
                         }}
@@ -157,7 +165,11 @@ const TabBar: React.FC = () => {
                             handleMenuClose();
                           }}
                           className="material-symbols-outlined hover-red"
-                          style={{ marginLeft: 'auto', cursor: 'pointer' }}
+                          style={{
+                            marginLeft: 'auto',
+                            cursor: 'pointer',
+                            color: tab.id === activeTab ? '#fff' : 'inherit',
+                          }}
                         >
                           close
                         </button>
