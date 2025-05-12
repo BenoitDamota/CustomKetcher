@@ -11,10 +11,11 @@ import { TabDataType } from '../types/TabDataType';
 import { getKekuleSmilesFromKetcher } from '../utils/MoleculesUtils';
 
 type ModalName =
+  | 'OpenProject'
+  | 'ExportProject'
+  | 'PredictionParameters'
   | 'GeneralSettings'
   | 'About'
-  | 'PredictionParameters'
-  | 'ExportProject'
   | null;
 
 type AppContextType = {

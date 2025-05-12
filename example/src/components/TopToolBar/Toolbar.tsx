@@ -9,11 +9,6 @@ import {
   IconButton,
   Stack,
 } from '@mui/material';
-import {
-  loadProjectFile,
-  openFileInput,
-  ProjectFileParsedContentJSON,
-} from '../../utils/fileUtils';
 import { startPrediction } from '../../utils/PredictionUtils';
 import { saveGeneralSettings } from '../../utils/SettingsUtils';
 import DontShowAgainPartial from '../../overlays/dialogs/partials/DontShowAgainPartial';
@@ -112,41 +107,6 @@ const Toolbar: React.FC = () => {
     }
   }
 
-  // Function to load a project file
-  function handleLoad() {
-    openFileInput((fileContent: string) => {
-      const result = loadProjectFile(fileContent);
-
-      if (result.success) {
-        const data: ProjectFileParsedContentJSON = result.data;
-
-        const moleculeFormat = data.molecules.format;
-        const moleculeData = data.molecules.data;
-        const spectrumData = data.spectrum;
-
-        if (moleculeFormat === 'SMILES') {
-          newTab({
-            smiles: moleculeData,
-            spectrum: spectrumData,
-          });
-        }
-        setSnackbarMessages({
-          severity: 'success',
-          message: `Project file successfuly loaded ${
-            moleculeFormat === 'SMILES' ? ` : ${moleculeData}` : ''
-          }`,
-        });
-      }
-
-      if (result.errors) {
-        setSnackbarMessages({
-          severity: 'error',
-          message: `Failed to load project file : ${result.errors}`,
-        });
-      }
-    });
-  }
-
   const handleClearProject = () => {
     const confirmOnClear = generalSettings
       .find((category) => category.settingsCategoryName === 'General')
@@ -154,7 +114,7 @@ const Toolbar: React.FC = () => {
     if (confirmOnClear !== undefined && confirmOnClear.value === true) {
       openConfirm.current(
         'Confirmation',
-        'This action will permanently remove all molecule sketches and spectrum data.\n\nAre you sure you want to proceed?',
+        'This action will permanently delete all molecule sketches and spectrum data from the current tab.\n\nAre you sure you want to proceed?',
         () => {
           if (!window.ketcher) {
             setSnackbarMessages({
@@ -251,7 +211,7 @@ const Toolbar: React.FC = () => {
             <button
               title="Open Project"
               className="material-symbols-outlined"
-              onClick={() => handleLoad()}
+              onClick={() => openModal('OpenProject')}
               style={{ fontSize: isBelow700 ? '35px' : '' }}
             >
               file_open
