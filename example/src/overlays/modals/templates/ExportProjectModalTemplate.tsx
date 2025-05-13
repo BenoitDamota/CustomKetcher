@@ -10,88 +10,28 @@ import {
   Typography,
   Stack,
 } from '@mui/material';
-import { convertProjectToJSON } from '../../../utils/fileUtils';
 import { SpectrumDataPoint } from '../../../types/SpectrumDataType';
 import { useAppContext } from '../../../context/AppContext';
-import { getKekuleSmilesFromKetcher } from '../../../utils/MoleculesUtils';
 import { SnackbarMessage } from '../../../types/SnackbarMessage';
 import { TabDataType } from '../../../types/TabDataType';
+import {
+  exportJSON,
+  exportMolIMG,
+  exportSpectrumIMG,
+  exportZIP,
+} from '../../../utils/exportUtils';
+import JSZip from 'jszip';
 
 interface Props {
   onClose: () => void;
 }
 
-// Fonctions to export the project in JSON format
-const exportJSON = async (
-  spectrumData: SpectrumDataPoint[],
-  setSnackbarMessages: React.Dispatch<React.SetStateAction<SnackbarMessage>>,
-): Promise<
-  { data: string; blob: Blob; filename: string } | { error: string }
-> => {
-  try {
-    if (!window.ketcher) {
-      throw new Error('Ketcher is not available.');
-    }
-
-    const smiles: string | null = await getKekuleSmilesFromKetcher(
-      setSnackbarMessages,
-    );
-
-    if (!smiles) {
-      throw new Error('No molecules obtained from Ketcher');
-    }
-
-    const json = convertProjectToJSON('SMILES', smiles, spectrumData);
-    const blob = new Blob([json], { type: 'application/json' });
-
-    return {
-      data: json,
-      blob,
-      filename: 'export_project.json',
-    };
-  } catch (err: unknown) {
-    if (err instanceof Error) {
-      return { error: err.message };
-    }
-    return { error: 'An unknown error occurred while generating the JSON.' };
-  }
-};
-
-const exportIMG = async (
-  spectrumData: SpectrumDataPoint[],
-  getSpectrumImage: (() => Promise<string | null>) | undefined,
-): Promise<
-  { data: string; blob: Blob; filename: string } | { error: string }
-> => {
-  try {
-    if (spectrumData && spectrumData.length === 0) {
-      throw new Error('No spectrum data loaded');
-    }
-
-    if (getSpectrumImage === undefined)
-      throw new Error(
-        'The function to generate the spectrum image is not initialized',
-      );
-
-    const base64Image = await getSpectrumImage();
-    if (!base64Image) throw new Error('Failed to generate image.');
-
-    const res = await fetch(base64Image);
-    const blob = await res.blob();
-
-    return { data: base64Image, blob, filename: 'export_spectrum.png' };
-  } catch (err: unknown) {
-    if (err instanceof Error) {
-      return { error: err.message };
-    }
-    return { error: 'Unknown error during image export.' };
-  }
-};
-
 const ExportProjectModalTemplate: React.FC<Props> = ({ onClose }) => {
   const { plotlyRef, setSnackbarMessages, tabs, activeTab } = useAppContext();
 
-  const [exportType, setExportType] = useState<'json' | 'image'>('json');
+  const [exportType, setExportType] = useState<
+    'json' | 'spectrum-image' | 'molecule-image' | 'zip'
+  >('json');
   const [previewData, setPreviewData] = useState<string>('');
   const [exportBlob, setExportBlob] = useState<Blob | null>(null);
   const [filename, setFilename] = useState<string>('export');
@@ -159,10 +99,9 @@ const ExportProjectModalTemplate: React.FC<Props> = ({ onClose }) => {
         setPreviewData(data);
         setExportBlob(blob);
         setFilename(filename);
-      } else if (exportType === 'image') {
+      } else if (exportType === 'spectrum-image') {
         setPreviewData('');
-
-        const result = await exportIMG(spectrumData, getSpectrumImage);
+        const result = await exportSpectrumIMG(spectrumData, getSpectrumImage);
         if ('error' in result) {
           setError(result.error);
           setPreviewData('');
@@ -173,6 +112,46 @@ const ExportProjectModalTemplate: React.FC<Props> = ({ onClose }) => {
         setPreviewData(data);
         setExportBlob(blob);
         setFilename(filename);
+      } else if (exportType === 'molecule-image') {
+        setPreviewData('');
+        const result = await exportMolIMG(setSnackbarMessages);
+        if ('error' in result) {
+          setError(result.error);
+          setPreviewData('');
+          setExportBlob(null);
+          return;
+        }
+        const { data, blob, filename } = result;
+        setPreviewData(data);
+        setExportBlob(blob);
+        setFilename(filename);
+      } else if (exportType === 'zip') {
+        setPreviewData('');
+        const result = await exportZIP(
+          spectrumData,
+          getSpectrumImage,
+          setSnackbarMessages,
+        );
+        if ('error' in result) {
+          setError(result.error);
+          setPreviewData('');
+          setExportBlob(null);
+          return;
+        }
+
+        const zip = await JSZip.loadAsync(result.blob);
+        const fileNames: string[] = [];
+        zip.forEach((relativePath, _) => {
+          fileNames.push(relativePath);
+        });
+
+        setPreviewData(
+          `The ZIP contains the following files :\n - ${fileNames.join(
+            '\n - ',
+          )}`,
+        );
+        setExportBlob(result.blob);
+        setFilename(result.filename);
       }
     },
     [tabs, exportType, activeTab, getSpectrumImage],
@@ -225,11 +204,21 @@ const ExportProjectModalTemplate: React.FC<Props> = ({ onClose }) => {
         <Select
           labelId="export-type-label"
           value={exportType}
-          onChange={(e) => setExportType(e.target.value as 'json' | 'image')}
+          onChange={(e) =>
+            setExportType(
+              e.target.value as
+                | 'json'
+                | 'spectrum-image'
+                | 'molecule-image'
+                | 'zip',
+            )
+          }
           label="Type d'export"
         >
           <MenuItem value="json">JSON</MenuItem>
-          <MenuItem value="image">Image</MenuItem>
+          <MenuItem value="spectrum-image">Spectrum Image</MenuItem>
+          <MenuItem value="molecule-image">Molecule Image</MenuItem>
+          <MenuItem value="zip">ZIP</MenuItem>
         </Select>
       </FormControl>
 
@@ -266,21 +255,33 @@ const ExportProjectModalTemplate: React.FC<Props> = ({ onClose }) => {
               />
             </Typography>
           </Box>
+        ) : exportType === 'zip' ? (
+          <Box p={2} sx={{ backgroundColor: '#f5f5f5', borderRadius: 2 }}>
+            <Typography variant="body2">
+              {previewData.startsWith('The ZIP') &&
+                previewData.split('\n').map((line, index) => (
+                  <React.Fragment key={index}>
+                    {line}
+                    <br />
+                  </React.Fragment>
+                ))}
+            </Typography>
+          </Box>
         ) : (
-          <Box p={2}>
-            {previewData && (
+          <Box p={2} sx={{ display: 'flex', justifyContent: 'center' }}>
+            {previewData.startsWith('data:image') ||
+            previewData.startsWith('blob:') ? (
               <img
-                src={previewData.startsWith('data:image') ? previewData : ''}
+                src={previewData}
                 alt="Export Preview"
                 style={{
-                  width: '100%',
+                  maxWidth: '100%',
                   height: 'auto',
-                  maxHeight: '380px',
                   borderRadius: 8,
                   border: '1px solid #ccc',
                 }}
               />
-            )}
+            ) : null}
           </Box>
         )}
       </Box>

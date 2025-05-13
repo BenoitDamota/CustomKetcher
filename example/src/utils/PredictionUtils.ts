@@ -51,6 +51,7 @@ export const startPrediction = async (
       return null;
     }
 
+    // Molecule SMILES is kekulized in the backend via RDKIT
     const response = await axios.post(`${apiUrl}/api/predict`, {
       smiles,
       endpoint: modelParameters.endpoint,
