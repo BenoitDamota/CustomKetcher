@@ -59,6 +59,8 @@ const MinimizeButton: React.FC<Props> = ({ minimizeRightPan }) => {
       <style>
         {`
         .minimize-btn {
+          margin: 0;
+          padding: 0;
           border-radius: 4px;
           width: 28px;
           height: 28px;

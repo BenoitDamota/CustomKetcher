@@ -5,6 +5,7 @@ import MinimizeButton from './MinimizeRightPanButton';
 import { useAppContext } from '../../context/AppContext';
 import { SpectrumDataPoint } from '../../types/SpectrumDataType';
 import AutoZoomOnRegionButton from './AutomZoomOnRegionButton';
+import { FormControl, MenuItem, Select } from '@mui/material';
 
 interface PlotlyHTMLElementWithFullLayout extends Plotly.PlotlyHTMLElement {
   _fullLayout: Plotly.Layout & {
@@ -35,6 +36,7 @@ export type SpectrumRegion = {
   ppmMin: number;
   ppmMax: number;
   intensityMax: number;
+  highestPpm: number;
 };
 
 interface Props {
@@ -54,6 +56,9 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
   const [modebarContainerIsReady, setIsModebarContainerReady] = useState(false);
   const [regions, setRegions] = useState<SpectrumRegion[]>([]);
   const [autoZoomOnRegion, setAutoZoomOnRegion] = useState<boolean>(false);
+  const [showPeaksLabels, setShowPeaksLabels] = useState<
+    'none' | 'atomsIds' | 'ppm'
+  >('atomsIds');
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -91,12 +96,19 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
     grouped.forEach((group, index) => {
       const ppms = group.map((p) => p.ppm);
       const intensities = group.map((p) => p.intensity);
+
+      // Find the ppm associted with the maximal intenisty of this peaks
+      const maxIntensity = Math.max(...intensities);
+      const indexOfMax = intensities.findIndex((i) => i === maxIntensity);
+      const highestPpm = ppms[indexOfMax];
+
       regionList.push({
         regionId: index,
         atomIds: group[0].atomID,
         ppmMin: Math.min(...ppms),
         ppmMax: Math.max(...ppms),
-        intensityMax: Math.max(...intensities),
+        intensityMax: maxIntensity,
+        highestPpm,
       });
     });
 
@@ -395,24 +407,37 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
         ]}
         layout={{
           ...layout,
-          annotations: regions.map((region) => {
-            const text = region.atomIds
-              .map((id) => id.toLocaleString())
-              .join('<br />');
+          annotations:
+            showPeaksLabels === 'atomsIds'
+              ? regions.map((region) => {
+                  const text = region.atomIds
+                    .map((id) => id.toLocaleString())
+                    .join('<br />');
 
-            const lines = region.atomIds.length;
-            const textHeight = lines * 14;
+                  const lines = region.atomIds.length;
+                  const textHeight = lines * 14;
 
-            return {
-              x: (region.ppmMin + region.ppmMax) / 2,
-              y: region.intensityMax,
-              yshift: textHeight,
-              text,
-              showarrow: false,
-              font: { size: 14, color: '#000000' },
-              align: 'center',
-            };
-          }),
+                  return {
+                    x: (region.ppmMin + region.ppmMax) / 2,
+                    y: region.intensityMax,
+                    yshift: textHeight,
+                    text,
+                    showarrow: false,
+                    font: { size: 14, color: '#000000' },
+                    align: 'center',
+                  };
+                })
+              : showPeaksLabels === 'ppm'
+              ? regions.map((region) => ({
+                  x: (region.ppmMin + region.ppmMax) / 2,
+                  y: region.intensityMax,
+                  yshift: 14,
+                  text: `${region.ppmMax.toFixed(3)}`,
+                  showarrow: false,
+                  font: { size: 14, color: '#000000' },
+                  align: 'center',
+                }))
+              : [],
         }}
         config={{
           displayModeBar: true,
@@ -435,8 +460,24 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
               justifyContent: 'center',
               alignItems: 'center',
               marginRight: '16px',
+              gap: '4px',
             }}
           >
+            <FormControl variant="filled" sx={{ m: 1, minWidth: 120 }}>
+              <Select
+                labelId="demo-simple-select-filled-label"
+                id="demo-simple-select-filled"
+                value={showPeaksLabels}
+                onChange={(e) => {
+                  const value = e.target.value as 'none' | 'atomsIds' | 'ppm';
+                  setShowPeaksLabels(value);
+                }}
+              >
+                <MenuItem value="none">No Labels</MenuItem>
+                <MenuItem value="atomsIds">Atoms Ids</MenuItem>
+                <MenuItem value="ppm">PPM</MenuItem>
+              </Select>
+            </FormControl>
             <AutoZoomOnRegionButton
               autoZoomOnRegion={autoZoomOnRegion}
               setAutoZoomOnRegion={setAutoZoomOnRegion}
