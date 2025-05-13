@@ -309,19 +309,19 @@ const Toolbar: React.FC = () => {
         }}
       >
         <button
-          title="Launch Prediction"
-          className="material-symbols-outlined"
-          onClick={() => handlePrediction()}
-        >
-          send
-        </button>
-        <InputBarSMILES input={inputSmilesBar} setInput={setInputSmilesBar} />
-        <button
           title="Prediction Parameters"
           onClick={() => openModal('PredictionParameters')}
           className="material-symbols-outlined"
         >
           manufacturing
+        </button>
+        <InputBarSMILES input={inputSmilesBar} setInput={setInputSmilesBar} />
+        <button
+          title="Launch Prediction"
+          className="material-symbols-outlined"
+          onClick={() => handlePrediction()}
+        >
+          send
         </button>
       </div>
 
