@@ -12,6 +12,11 @@ import {
 import { startPrediction } from '../../utils/PredictionUtils';
 import { saveGeneralSettings } from '../../utils/SettingsUtils';
 import DontShowAgainPartial from '../../overlays/dialogs/partials/DontShowAgainPartial';
+import {
+  loadProjectFile,
+  openFileInput,
+  ProjectFileParsedContentJSON,
+} from '../../utils/fileUtils';
 
 const Toolbar: React.FC = () => {
   const {
@@ -20,7 +25,6 @@ const Toolbar: React.FC = () => {
     generalSettings,
     setSnackbarMessages,
     predictionParameters,
-    tabs,
     newTab,
     clearActiveTab,
   } = useAppContext();
@@ -38,11 +42,40 @@ const Toolbar: React.FC = () => {
 
   const [inputSmilesBar, setInputSmilesBar] = useState('');
 
-  const hideTabBarWhenSingleTab =
-    (generalSettings
-      .find((cat) => cat.settingsCategoryName === 'General')
-      ?.settings.find((setting) => setting.key === 'hideTabBarWhenSingleTab')
-      ?.value as boolean) || false;
+  // Function to load a project file
+  function handleLoad() {
+    openFileInput((fileContent: string) => {
+      const result = loadProjectFile(fileContent);
+
+      if (result.success) {
+        const data: ProjectFileParsedContentJSON = result.data;
+
+        const moleculeFormat = data.molecules.format;
+        const moleculeData = data.molecules.data;
+        const spectrumData = data.spectrum;
+
+        if (moleculeFormat === 'SMILES') {
+          newTab({
+            smiles: moleculeData,
+            spectrum: spectrumData,
+          });
+        }
+        setSnackbarMessages({
+          severity: 'success',
+          message: `Project file successfuly loaded ${
+            moleculeFormat === 'SMILES' ? ` : ${moleculeData}` : ''
+          }`,
+        });
+      }
+
+      if (result.errors) {
+        setSnackbarMessages({
+          severity: 'error',
+          message: `Failed to load project file : ${result.errors}`,
+        });
+      }
+    });
+  }
 
   function handlePrediction() {
     if (inputSmilesBar) {
@@ -166,10 +199,6 @@ const Toolbar: React.FC = () => {
         justifyContent: 'space-between',
         width: '100%',
         height: '57px',
-        borderBottom:
-          hideTabBarWhenSingleTab && tabs.current.length <= 1
-            ? 'solid #525252 3px'
-            : 'none',
         paddingInline: '16px',
         position: 'relative',
       }}
@@ -209,12 +238,12 @@ const Toolbar: React.FC = () => {
             }}
           >
             <button
-              title="Open Project"
+              title="Open"
               className="material-symbols-outlined"
-              onClick={() => openModal('OpenProject')}
+              onClick={() => handleLoad()}
               style={{ fontSize: isBelow700 ? '35px' : '' }}
             >
-              file_open
+              upload_file
             </button>
             {isBelow700 && (
               <IconButton
@@ -255,7 +284,7 @@ const Toolbar: React.FC = () => {
                 onClick={() => openModal('ExportProject')}
                 className="material-symbols-outlined"
               >
-                file_export
+                save_as
               </button>
             </>
           )}
@@ -289,7 +318,7 @@ const Toolbar: React.FC = () => {
               },
             }}
           >
-            <span className="material-symbols-outlined">file_export</span>
+            <span className="material-symbols-outlined">save_as</span>
           </MenuItem>
         </Stack>
       </Menu>
