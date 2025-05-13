@@ -243,7 +243,7 @@ const Toolbar: React.FC = () => {
               onClick={() => handleLoad()}
               style={{ fontSize: isBelow700 ? '35px' : '' }}
             >
-              upload_file
+              folder_open
             </button>
             {isBelow700 && (
               <IconButton
