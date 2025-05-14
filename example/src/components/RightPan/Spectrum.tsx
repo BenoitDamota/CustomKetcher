@@ -392,6 +392,12 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
     }
   };
 
+  function truncateDecimalsStr(num: number, digits: number) {
+    const [intPart, decPart = ''] = String(num).split('.');
+    const truncatedDec = decPart.slice(0, digits).padEnd(digits, '0');
+    return `${intPart}.${truncatedDec}`;
+  }
+
   return (
     <div ref={containerRef} style={{ height: '100%' }}>
       <Plot
@@ -432,7 +438,7 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
                   x: (region.ppmMin + region.ppmMax) / 2,
                   y: region.intensityMax,
                   yshift: 14,
-                  text: `${region.ppmMax.toFixed(3)}`,
+                  text: `${truncateDecimalsStr(region.highestPpm, 3)}`,
                   showarrow: false,
                   font: { size: 14, color: '#000000' },
                   align: 'center',
