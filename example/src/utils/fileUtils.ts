@@ -1,4 +1,7 @@
+import axios from 'axios';
 import { SpectrumDataPoint } from '../types/SpectrumDataType';
+
+const apiUrl = process.env.REACT_APP_INTERN_API_PATH || '';
 
 export interface ProjectFileMoleculesJSON {
   format: string;
@@ -22,8 +25,10 @@ export interface LoadProjectFileResult {
   data: ProjectFileParsedContentJSON;
 }
 
-// Function to load and parse the JSON file
-export function loadProjectFile(fileContent: string): LoadProjectFileResult {
+export async function loadProjectFile(
+  file: File,
+  fileContent: string,
+): Promise<LoadProjectFileResult> {
   const result: LoadProjectFileResult = {
     success: '',
     errors: '',
@@ -33,42 +38,77 @@ export function loadProjectFile(fileContent: string): LoadProjectFileResult {
     },
   };
 
-  try {
-    const parsedContent: ProjectFileParsedContentJSON = JSON.parse(fileContent);
+  const filename = file.name.toLowerCase();
 
-    // Validate JSON structure
-    if (
-      parsedContent.molecules &&
-      typeof parsedContent.molecules.format === 'string' &&
-      typeof parsedContent.molecules.data === 'string' &&
-      Array.isArray(parsedContent.spectrum)
-    ) {
-      // Ensure molecule data doesn't contain a period (multiples molecules in a single SMILES)
+  // Case 1: JSON file
+  if (filename.endsWith('.json')) {
+    try {
+      const parsedContent: ProjectFileParsedContentJSON =
+        JSON.parse(fileContent);
+
       if (
-        parsedContent.molecules.format === 'SMILES' &&
-        parsedContent.molecules.data.includes('.')
+        parsedContent.molecules &&
+        typeof parsedContent.molecules.format === 'string' &&
+        typeof parsedContent.molecules.data === 'string' &&
+        Array.isArray(parsedContent.spectrum)
       ) {
-        result.errors =
-          'molecule data should only contain a single molecule (no dot allowed).';
+        if (
+          parsedContent.molecules.format === 'SMILES' &&
+          parsedContent.molecules.data.includes('.')
+        ) {
+          result.errors =
+            'molecule data should only contain a single molecule (no dot allowed).';
+        } else {
+          result.success = `File loaded successfully! \n\n Molecule : ${parsedContent.molecules.data}`;
+          result.data = parsedContent;
+        }
       } else {
-        result.success = `File loaded successfully! \n\n Molecule : ${parsedContent.molecules.data}`;
-        result.data = parsedContent;
+        result.errors = 'invalid JSON structure.';
       }
-    } else {
-      result.errors = 'invalid JSON structure.';
+    } catch (error) {
+      result.errors = 'failed to parse JSON.';
     }
-  } catch (error) {
-    result.errors = 'failed to parse JSON.';
+
+    return result;
   }
 
+  // Case 2: JCAMP file
+  else if (filename.endsWith('.jdx') || filename.endsWith('.jcamp')) {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await axios.post(`${apiUrl}/api/loadJCAMP`, formData);
+
+      console.log(response);
+
+      const spectrum = response.data as SpectrumDataPoint[];
+
+      result.success = 'JCAMP file successfully loaded!';
+      result.data = {
+        molecules: { format: '', data: '' },
+        spectrum,
+      };
+
+      return result;
+    } catch (error) {
+      console.log(error);
+      result.errors = 'failed to load JCAMP from server.';
+      return result;
+    }
+  }
+
+  result.errors = 'unsupported file format.';
   return result;
 }
 
 // Function to open file input and return its content
-export function openFileInput(callback: (fileContent: string) => void): void {
+export function openFileInput(
+  callback: (file: File, fileContent: string) => void,
+): void {
   const inputFile = document.createElement('input');
   inputFile.type = 'file';
-  inputFile.accept = '.json';
+  inputFile.accept = '.json,.jcamp,.jdx';
 
   inputFile.onchange = (e) => {
     const target = e.target as HTMLInputElement;
@@ -77,14 +117,18 @@ export function openFileInput(callback: (fileContent: string) => void): void {
       const reader = new FileReader();
       reader.onload = () => {
         const fileContent = reader.result as string;
-        callback(fileContent);
+        callback(file, fileContent);
       };
-
       reader.onerror = () => {
         console.error('Failed to read the file.');
       };
 
-      reader.readAsText(file);
+      // JSON only needs fileContent, JCAMP doesn’t
+      if (file.name.endsWith('.json')) {
+        reader.readAsText(file);
+      } else {
+        callback(file, '');
+      }
     }
   };
 

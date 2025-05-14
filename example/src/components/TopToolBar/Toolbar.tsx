@@ -12,11 +12,7 @@ import {
 import { startPrediction } from '../../utils/PredictionUtils';
 import { saveGeneralSettings } from '../../utils/SettingsUtils';
 import DontShowAgainPartial from '../../overlays/dialogs/partials/DontShowAgainPartial';
-import {
-  loadProjectFile,
-  openFileInput,
-  ProjectFileParsedContentJSON,
-} from '../../utils/fileUtils';
+import { loadProjectFile, openFileInput } from '../../utils/fileUtils';
 
 const Toolbar: React.FC = () => {
   const {
@@ -45,31 +41,22 @@ const Toolbar: React.FC = () => {
 
   // Function to load a project file
   function handleLoad() {
-    openFileInput((fileContent: string) => {
-      const result = loadProjectFile(fileContent);
+    openFileInput(async (file, fileContent) => {
+      const result = await loadProjectFile(file, fileContent);
 
       if (result.success) {
-        const data: ProjectFileParsedContentJSON = result.data;
+        const data = result.data;
 
-        const moleculeFormat = data.molecules.format;
-        const moleculeData = data.molecules.data;
-        const spectrumData = data.spectrum;
+        newTab({
+          smiles: data.molecules.format === 'SMILES' ? data.molecules.data : '',
+          spectrum: data.spectrum,
+        });
 
-        if (moleculeFormat === 'SMILES') {
-          newTab({
-            smiles: moleculeData,
-            spectrum: spectrumData,
-          });
-        }
         setSnackbarMessages({
           severity: 'success',
-          message: `Project file successfuly loaded ${
-            moleculeFormat === 'SMILES' ? ` : ${moleculeData}` : ''
-          }`,
+          message: result.success,
         });
-      }
-
-      if (result.errors) {
+      } else {
         setSnackbarMessages({
           severity: 'error',
           message: `Failed to load project file : ${result.errors}`,
