@@ -347,6 +347,23 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
+  // Ask a confirmation before quitting
+  useEffect(() => {
+    const handleBeforeUnload = (event: {
+      preventDefault: () => void;
+      returnValue: string;
+    }) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, []);
+
   return (
     <AppContext.Provider
       value={{
