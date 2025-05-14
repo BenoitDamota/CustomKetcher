@@ -2,14 +2,21 @@ import axios, { AxiosError } from 'axios';
 import { ModelParameters } from '../types/ModelParametersType';
 import { PredictionDataType } from '../types/PredictionDataType';
 import { SnackbarMessage } from '../types/SnackbarMessage';
+import { TabDataType } from '../types/TabDataType';
 
 const apiUrl = process.env.REACT_APP_INTERN_API_PATH || '';
 
+const PREDICTION_MODEL_TIMEOUT = 300000;
+
 export const startPrediction = async (
+  newTab: (data: Omit<TabDataType, 'id'>) => Promise<number>,
+  updateTab: (id: number, data: Omit<TabDataType, 'id'>) => Promise<boolean>,
   modelsParameters: ModelParameters,
   setSnackbarMessages: React.Dispatch<React.SetStateAction<SnackbarMessage>>,
   smilesArg?: string,
 ): Promise<PredictionDataType | null> => {
+  let newTabId: number | null = null;
+
   try {
     let smiles = smilesArg || '';
 
@@ -51,17 +58,50 @@ export const startPrediction = async (
       return null;
     }
 
-    // Molecule SMILES is kekulized in the backend via RDKIT
-    const response = await axios.post(`${apiUrl}/api/predict`, {
+    newTabId = await newTab({
+      status: 'waiting',
       smiles,
-      endpoint: modelParameters.endpoint,
-      ...modelParameters.parameters,
+      spectrum: [],
     });
+
+    // Molecule SMILES is kekulized in the backend via RDKIT
+    const response = await axios.post(
+      `${apiUrl}/api/predict`,
+      {
+        smiles,
+        endpoint: modelParameters.endpoint,
+        ...modelParameters.parameters,
+      },
+      {
+        timeout: PREDICTION_MODEL_TIMEOUT,
+      },
+    );
 
     const predictionData: PredictionDataType = response.data;
 
+    const result = await updateTab(newTabId, {
+      status: 'ready',
+      smiles: predictionData.smiles,
+      spectrum: predictionData.spectrum,
+    });
+
+    if (result) {
+      setSnackbarMessages({
+        severity: 'success',
+        message: `Tab ${newTabId} : Prediction result received.`,
+      });
+    }
+
     return predictionData;
   } catch (error: unknown) {
+    if (newTabId !== null) {
+      await updateTab(newTabId, {
+        status: 'ready',
+        smiles: '',
+        spectrum: [],
+      });
+    }
+
     if (error instanceof AxiosError) {
       const errorData = error.response?.data.error;
       if (errorData) {

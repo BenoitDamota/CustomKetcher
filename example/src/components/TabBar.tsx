@@ -62,7 +62,7 @@ const TabBar: React.FC = () => {
           }}
         >
           {tabs.current.map((tab: TabDataType, index: number) => {
-            const isActive = tab.id === activeTab;
+            const isActive = tab.id === activeTab.current;
 
             if (index >= maxVisibleTabs) return null;
 
@@ -177,12 +177,18 @@ const TabBar: React.FC = () => {
                       key={tab.id}
                       sx={{
                         backgroundColor:
-                          tab.id === activeTab ? '#525252 ' : 'transparent',
-                        color: tab.id === activeTab ? '#fff' : 'initial',
+                          tab.id === activeTab.current
+                            ? '#525252 '
+                            : 'transparent',
+                        color:
+                          tab.id === activeTab.current ? '#fff' : 'initial',
                         '&:hover': {
                           backgroundColor:
-                            tab.id === activeTab ? '#474747' : '#f0f0f0',
-                          color: tab.id === activeTab ? '#fff' : 'inherit',
+                            tab.id === activeTab.current
+                              ? '#474747'
+                              : '#f0f0f0',
+                          color:
+                            tab.id === activeTab.current ? '#fff' : 'inherit',
                         },
                       }}
                       onClick={() => {
@@ -201,7 +207,8 @@ const TabBar: React.FC = () => {
                         style={{
                           marginLeft: 'auto',
                           cursor: 'pointer',
-                          color: tab.id === activeTab ? '#fff' : 'inherit',
+                          color:
+                            tab.id === activeTab.current ? '#fff' : 'inherit',
                         }}
                       >
                         close

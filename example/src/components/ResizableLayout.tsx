@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import LeftPane from './LeftPan/LeftPan';
 import RightPan from './RightPan/RightPan';
+import { useAppContext } from '../context/AppContext';
+import { Box, CircularProgress, Typography, Backdrop } from '@mui/material';
 
 export const MIN_WIDTH_LEFT_PAN = 550;
 export const RESIZE_BAR_WIDTH = 6;
@@ -8,6 +10,12 @@ export const MIN_WIDTH_RIGHT_PAN = 350;
 export const MINIMIZED_BAR_WIDTH = 30;
 
 const ResizableLayout: React.FC = () => {
+  const { tabs, activeTab } = useAppContext();
+
+  const tabIsWaiting =
+    tabs.current.find((t) => t.id === activeTab.current)?.status ===
+      'waiting' || false;
+
   const initialLeftWidth = window.innerWidth / 2;
   const [leftWidth, setLeftWidth] = useState<number>(initialLeftWidth);
 
@@ -145,6 +153,7 @@ const ResizableLayout: React.FC = () => {
         display: 'flex',
         width: '100%',
         height: '100%',
+        position: 'relative',
       }}
     >
       <div
@@ -180,6 +189,54 @@ const ResizableLayout: React.FC = () => {
           expandPanel={expandPanel}
         />
       </div>
+
+      {tabIsWaiting && (
+        <Backdrop
+          open
+          sx={{
+            position: 'absolute',
+            zIndex: 40,
+            color: '#fff',
+            backdropFilter: 'blur(2px)',
+          }}
+        >
+          <Box
+            sx={{
+              bgcolor: 'background.paper',
+              p: 4,
+              borderRadius: 2,
+              boxShadow: 24,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}
+          >
+            <CircularProgress />
+            <Typography
+              variant="h6"
+              sx={{ mt: 2, textAlign: 'center' }}
+              color="secondary"
+            >
+              This tab is waiting for the prediction result
+            </Typography>
+            <Typography
+              variant="subtitle1"
+              sx={{ mt: 3 }}
+              color="text.secondary"
+            >
+              SMILES sent to prediction:
+            </Typography>
+            <Typography
+              variant="body1"
+              sx={{ mt: 1, wordBreak: 'break-word', fontFamily: 'monospace' }}
+              color="primary"
+            >
+              {tabs.current.find((t) => t.id === activeTab.current)?.smiles ||
+                ''}
+            </Typography>
+          </Box>
+        </Backdrop>
+      )}
     </div>
   );
 };

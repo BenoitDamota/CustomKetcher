@@ -26,6 +26,7 @@ const Toolbar: React.FC = () => {
     setSnackbarMessages,
     predictionParameters,
     newTab,
+    updateTab,
     clearActiveTab,
   } = useAppContext();
 
@@ -93,17 +94,12 @@ const Toolbar: React.FC = () => {
             saveGeneralSettings(generalSettings);
 
             startPrediction(
+              newTab,
+              updateTab,
               predictionParameters,
               setSnackbarMessages,
               inputSmilesBar,
-            ).then((predResult) => {
-              if (!predResult) return;
-
-              newTab({
-                smiles: predResult.smiles,
-                spectrum: predResult.spectrum,
-              });
-            });
+            );
           },
           <DontShowAgainPartial
             settingsCategory="General"
@@ -112,30 +108,19 @@ const Toolbar: React.FC = () => {
         );
       } else {
         startPrediction(
+          newTab,
+          updateTab,
           predictionParameters,
           setSnackbarMessages,
           inputSmilesBar,
-        ).then((predResult) => {
-          if (!predResult) return;
-          if (!window.ketcher) return;
-
-          newTab({
-            smiles: predResult.smiles,
-            spectrum: predResult.spectrum,
-          });
-        });
+        );
       }
     } else {
-      startPrediction(predictionParameters, setSnackbarMessages).then(
-        (predResult) => {
-          if (!predResult) return;
-          if (!window.ketcher) return;
-
-          newTab({
-            smiles: predResult.smiles,
-            spectrum: predResult.spectrum,
-          });
-        },
+      startPrediction(
+        newTab,
+        updateTab,
+        predictionParameters,
+        setSnackbarMessages,
       );
     }
   }

@@ -63,8 +63,8 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const spectrumData = useMemo(() => {
-    return (tabs.current.find((tab) => tab.id === activeTab)?.spectrum ||
-      []) as SpectrumDataPoint[];
+    return (tabs.current.find((tab) => tab.id === activeTab.current)
+      ?.spectrum || []) as SpectrumDataPoint[];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, tabs, renderVersion]);
 

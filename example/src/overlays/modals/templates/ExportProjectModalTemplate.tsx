@@ -76,7 +76,7 @@ const ExportProjectModalTemplate: React.FC<Props> = ({ onClose }) => {
       >,
     ) => {
       const currentTab: TabDataType | undefined = tabs.current.find(
-        (tab) => tab.id === activeTab,
+        (tab) => tab.id === activeTab.current,
       );
 
       if (!currentTab) {

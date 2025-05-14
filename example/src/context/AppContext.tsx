@@ -28,10 +28,11 @@ type AppContextType = {
     React.SetStateAction<ModelParameters>
   >;
   tabs: React.MutableRefObject<TabDataType[]>;
-  activeTab: number;
+  activeTab: React.MutableRefObject<number>;
   changeTab: (newTabId: number) => Promise<void>;
   clearActiveTab: () => void;
-  newTab: (data: Omit<TabDataType, 'id'>) => void;
+  newTab: (data: Omit<TabDataType, 'id'>) => Promise<number>;
+  updateTab: (id: number, data: Omit<TabDataType, 'id'>) => Promise<boolean>;
   closeTab: (tabId: number) => void;
   openAlert: React.MutableRefObject<(title: string, content: string) => void>;
   openConfirm: React.MutableRefObject<
@@ -75,6 +76,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const tabs = useRef<TabDataType[]>([
     {
       id: 1,
+      status: 'ready',
       smiles: '',
       spectrum: [],
     },
@@ -82,7 +84,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   const nextTabId = useRef(2);
 
-  const [activeTab, setActiveTab] = useState<number>(1);
+  const activeTab = useRef<number>(1);
 
   const [renderVersion, forceRender] = useState(0);
 
@@ -109,12 +111,12 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => rerender(), [generalSettings]);
 
   const changeTab = async (newTabId: number) => {
-    if (newTabId === activeTab) return;
+    if (newTabId === activeTab.current) return;
 
     const tabIndex = tabs.current.findIndex((tab) => tab.id === newTabId);
     if (tabIndex === -1) return;
 
-    const lastActiveTab = activeTab;
+    const lastActiveTab = activeTab.current;
     const lastActiveTabIndex = tabs.current.findIndex(
       (tab) => tab.id === lastActiveTab,
     );
@@ -143,14 +145,16 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       tabs.current[lastActiveTabIndex].smiles = currentSmiles;
     }
 
-    setActiveTab(newTabId);
+    activeTab.current = newTabId;
     const activeSmile = tabs.current[tabIndex]?.smiles || '';
     await window.ketcher.setMolecule(activeSmile);
     rerender();
   };
 
   const clearActiveTab = () => {
-    const tabIndex = tabs.current.findIndex((tab) => tab.id === activeTab);
+    const tabIndex = tabs.current.findIndex(
+      (tab) => tab.id === activeTab.current,
+    );
     if (tabIndex === -1) return;
 
     tabs.current[tabIndex] = {
@@ -161,15 +165,56 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     rerender();
   };
 
-  const newTab = async (data: Omit<TabDataType, 'id'>) => {
+  const newTab = async (data: Omit<TabDataType, 'id'>): Promise<number> => {
+    const newTabId = nextTabId.current++;
+
     const newTab: TabDataType = {
       ...data,
-      id: nextTabId.current++,
+      id: newTabId,
+      status: data.status ?? 'ready',
     };
 
     tabs.current.push(newTab);
     await changeTab(newTab.id);
     rerender();
+
+    return newTabId;
+  };
+
+  const updateTab = async (
+    id: number,
+    data: Omit<TabDataType, 'id'>,
+  ): Promise<boolean> => {
+    const index = tabs.current.findIndex((tab) => tab.id === id);
+    if (index === -1) {
+      console.warn(
+        `Failed to update tab (id: ${id}): tab not found. It may have been closed.`,
+      );
+      return false;
+    }
+
+    const updatedTab: TabDataType = {
+      smiles: data.smiles,
+      spectrum: data.spectrum,
+      status: data.status ?? 'ready',
+      id,
+    };
+
+    tabs.current[index] = updatedTab;
+
+    // Update app if showing the updated tab
+    if (activeTab.current === id) {
+      if (!window.ketcher) {
+        setSnackbarMessages({
+          severity: 'error',
+          message: 'Could not find Ketcher when updating tabs',
+        });
+        return false;
+      }
+      window.ketcher?.setMolecule(tabs.current[index].smiles);
+    }
+    rerender();
+    return true;
   };
 
   const closeTab = async (tabId: number) => {
@@ -187,16 +232,21 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     tabs.current.splice(tabIndex, 1);
 
     if (tabs.current.length === 0) {
-      const emptyTab = { id: nextTabId.current++, smiles: '', spectrum: [] };
+      const emptyTab: TabDataType = {
+        id: nextTabId.current++,
+        status: 'ready',
+        smiles: '',
+        spectrum: [],
+      };
       tabs.current = [emptyTab];
-      setActiveTab(emptyTab.id);
+      activeTab.current = emptyTab.id;
       await window.ketcher.setMolecule('');
       rerender();
       return;
     }
 
-    const isActiveClosed = activeTab === tabId;
-    let newActiveTabId = activeTab;
+    const isActiveClosed = activeTab.current === tabId;
+    let newActiveTabId = activeTab.current;
 
     if (isActiveClosed) {
       const newTab =
@@ -204,7 +254,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       newActiveTabId = newTab.id;
     }
 
-    setActiveTab(newActiveTabId);
+    activeTab.current = newActiveTabId;
     const newActiveTab = tabs.current.find((tab) => tab.id === newActiveTabId);
     if (newActiveTab) {
       await window.ketcher.setMolecule(newActiveTab.smiles || '');
@@ -219,7 +269,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     const fetchGeneralSettingsWithRetry = async () => {
       const delay = (ms: number) =>
         new Promise((resolve) => setTimeout(resolve, ms));
-      const retryInterval = 3000; // ms
+      const retryInterval = 3000;
       const maxRetries = 10;
 
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -241,7 +291,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         await delay(retryInterval);
       }
 
-      // Si on sort de la boucle sans succès
       if (isMounted) {
         console.error(
           'Impossible de charger les paramètres après 10 tentatives.',
@@ -262,7 +311,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     const fetchModelParametersWithRetry = async () => {
       const delay = (ms: number) =>
         new Promise((resolve) => setTimeout(resolve, ms));
-      const retryInterval = 3000; // 3 secondes
+      const retryInterval = 3000;
       const maxRetries = 10;
 
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -284,7 +333,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         await delay(retryInterval);
       }
 
-      // Si on sort de la boucle sans succès
       if (isMounted) {
         console.error(
           'Impossible de charger les paramètres du modèle après 10 tentatives.',
@@ -312,6 +360,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         activeTab,
         changeTab,
         newTab,
+        updateTab,
         clearActiveTab,
         closeTab,
         openAlert,
