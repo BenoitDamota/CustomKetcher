@@ -14,8 +14,10 @@
  * limitations under the License.
  ***************************************************************************/
 
+import { useDispatch, useSelector } from 'react-redux';
 import { ElementWithDropdown } from './ElementWithDropdown';
 import { TopToolbarIconButton } from './TopToolbarIconButton';
+import { saveSettings } from 'src/script/ui/state/options';
 
 interface ExternalFuncProps {
   isCollapsed: boolean;
@@ -50,6 +52,16 @@ export const ExternalFuncControls = ({
   hiddenButtons,
   shortcuts,
 }: ExternalFuncProps) => {
+  const dispatch = useDispatch();
+  const showAtomIds = useSelector(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (state: any) => state.options.settings.showAtomIds,
+  );
+
+  const toggleShowAtomIds = () => {
+    dispatch(saveSettings({ showAtomIds: !showAtomIds }));
+  };
+
   const externalFuncButtons = [
     {
       name: 'arom',
@@ -95,6 +107,11 @@ export const ExternalFuncControls = ({
       name: 'miew',
       title: '3D Viewer',
       handler: onMiew,
+    },
+    {
+      name: 'showAtomIds',
+      title: showAtomIds ? 'Hide Atom IDs' : 'Show Atom IDs',
+      handler: toggleShowAtomIds,
     },
   ];
 

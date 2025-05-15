@@ -392,7 +392,7 @@ const debug: {
     title: 'Show atom Ids',
     type: 'boolean',
     description: 'slider',
-    default: false,
+    default: true,
   },
   showBondIds: {
     title: 'Show bonds Ids',
