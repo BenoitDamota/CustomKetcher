@@ -218,6 +218,9 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const closeTab = async (tabId: number) => {
+    const tabIndex = tabs.current.findIndex((t) => t.id === tabId);
+    if (tabIndex === -1) return;
+
     if (!window.ketcher) {
       setSnackbarMessages({
         severity: 'error',
@@ -226,8 +229,31 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
-    const tabIndex = tabs.current.findIndex((tab) => tab.id === tabId);
-    if (tabIndex === -1) return;
+    const tab = tabs.current[tabIndex];
+    let confirmState: 'none' | 'waiting' | 'notBlank' = 'none';
+
+    if (tab.status === 'waiting') {
+      confirmState = 'waiting';
+    } else if (
+      tab.smiles ||
+      tab.spectrum.length !== 0 ||
+      (tabId === activeTab.current &&
+        (await window.ketcher.getSmiles()).trim() !== '')
+    ) {
+      confirmState = 'notBlank';
+    }
+
+    if (confirmState !== 'none') {
+      const confirmMessage =
+        confirmState === 'waiting'
+          ? `Tab ${tabId} is currently awaiting a prediction result. Closing it now means you won't receive the result.`
+          : `Tab ${tabId} contains unsaved molecular or spectrum data.`;
+
+      // eslint-disable-next-line no-alert
+      if (!confirm(`${confirmMessage}\n\nAre you sure you want to continue?`)) {
+        return;
+      }
+    }
 
     tabs.current.splice(tabIndex, 1);
 
@@ -246,18 +272,11 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     const isActiveClosed = activeTab.current === tabId;
-    let newActiveTabId = activeTab.current;
-
     if (isActiveClosed) {
-      const newTab =
+      const fallbackTab =
         tabs.current[tabIndex] || tabs.current[tabs.current.length - 1];
-      newActiveTabId = newTab.id;
-    }
-
-    activeTab.current = newActiveTabId;
-    const newActiveTab = tabs.current.find((tab) => tab.id === newActiveTabId);
-    if (newActiveTab) {
-      await window.ketcher.setMolecule(newActiveTab.smiles || '');
+      activeTab.current = fallbackTab.id;
+      await window.ketcher.setMolecule(fallbackTab.smiles || '');
     }
 
     rerender();
