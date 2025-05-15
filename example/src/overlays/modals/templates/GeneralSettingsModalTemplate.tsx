@@ -90,30 +90,32 @@ const SettingsModalTemplate: React.FC<Props> = ({ onClose, timeoutRef }) => {
     setValues(initial);
   };
 
-  const handleFactoryReset = () => {
-    openConfirm.current(
-      'Factory Reset',
-      'This will erase all your saved Model Parameters and General Settings. Are you sure you want to continue?',
-      async () => {
-        try {
-          await resetGeneralSettingsToDefault();
-          const settings: GeneralSettings | null = await loadGeneralSettings();
-          if (settings) {
-            setGeneralSettings(settings);
-          }
+  const handleFactoryReset = async () => {
+    const confirmed = openConfirm.current
+      ? await openConfirm.current(
+          'Factory Reset',
+          'This will erase all your saved Model Parameters and General Settings. Are you sure you want to continue?',
+        )
+      : true;
 
-          await resetModelParametersToDefault();
-          const parameters: ModelParameters | null =
-            await loadModelParameters();
-          if (parameters) {
-            setPredictionParameters(parameters);
-          }
-        } catch (error) {
-          console.error('Error during factory reset:', error);
-          setErrorMessages('Error during factory reset');
-        }
-      },
-    );
+    if (!confirmed) return;
+
+    try {
+      await resetGeneralSettingsToDefault();
+      const settings: GeneralSettings | null = await loadGeneralSettings();
+      if (settings) {
+        setGeneralSettings(settings);
+      }
+
+      await resetModelParametersToDefault();
+      const parameters: ModelParameters | null = await loadModelParameters();
+      if (parameters) {
+        setPredictionParameters(parameters);
+      }
+    } catch (error) {
+      console.error('Error during factory reset:', error);
+      setErrorMessages('Error during factory reset');
+    }
   };
 
   const handleApply = async () => {

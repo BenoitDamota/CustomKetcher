@@ -36,12 +36,12 @@ type AppContextType = {
   closeTab: (tabId: number) => void;
   openAlert: React.MutableRefObject<(title: string, content: string) => void>;
   openConfirm: React.MutableRefObject<
-    (
-      title: string,
-      content: string,
-      onConfirm: () => void,
-      htmlContent?: JSX.Element | string,
-    ) => void
+    | ((
+        title: string,
+        content: string,
+        htmlContent?: React.ReactNode,
+      ) => Promise<boolean>)
+    | null
   >;
   openModal: (name: ModalName) => void;
   closeModal: () => void;
@@ -68,10 +68,12 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     // eslint-disable-next-line @typescript-eslint/no-empty-function
   });
   const openConfirm = useRef<
-    (title: string, content: string, onConfirm: () => void) => void
-  >(() => {
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
-  });
+    (
+      title: string,
+      content: string,
+      htmlContent?: React.ReactNode,
+    ) => Promise<boolean>
+  >(() => Promise.resolve(true));
 
   const tabs = useRef<TabDataType[]>([
     {
@@ -249,8 +251,14 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
           ? `Tab ${tabId} is currently awaiting a prediction result. Closing it now means you won't receive the result.`
           : `Tab ${tabId} contains unsaved molecular or spectrum data.`;
 
-      // eslint-disable-next-line no-alert
-      if (!confirm(`${confirmMessage}\n\nAre you sure you want to continue?`)) {
+      const confirmed = openConfirm.current
+        ? await openConfirm.current(
+            'Confirmation',
+            `${confirmMessage}\n\nAre you sure you want to continue?`,
+          )
+        : true;
+
+      if (!confirmed) {
         return;
       }
     }

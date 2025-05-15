@@ -65,43 +65,39 @@ const Toolbar: React.FC = () => {
     });
   }
 
-  function handlePrediction() {
+  async function handlePrediction() {
     if (inputSmilesBar) {
       const confirmOnInputSMILES = generalSettings
         .find((category) => category.settingsCategoryName === 'General')
         ?.settings.find((setting) => setting.key === 'confirmOnInputSMILES');
+
       if (
         confirmOnInputSMILES !== undefined &&
         confirmOnInputSMILES.value === true
       ) {
-        openConfirm.current(
-          'Confirmation',
-          'The input bar contains a SMILES.\n\nAre you sure you want to start the prediction based on this molecule?',
-          () => {
-            saveGeneralSettings(generalSettings);
+        const confirmed = openConfirm.current
+          ? await openConfirm.current?.(
+              'Confirmation',
+              'The input bar contains a SMILES.\n\nAre you sure you want to start the prediction based on this molecule?',
+              <DontShowAgainPartial
+                settingsCategory="General"
+                settingsKey={'confirmOnInputSMILES'}
+              />,
+            )
+          : true;
 
-            startPrediction(
-              newTab,
-              updateTab,
-              predictionParameters,
-              setSnackbarMessages,
-              inputSmilesBar,
-            );
-          },
-          <DontShowAgainPartial
-            settingsCategory="General"
-            settingsKey={'confirmOnInputSMILES'}
-          />,
-        );
-      } else {
-        startPrediction(
-          newTab,
-          updateTab,
-          predictionParameters,
-          setSnackbarMessages,
-          inputSmilesBar,
-        );
+        saveGeneralSettings(generalSettings);
+
+        if (!confirmed) return;
       }
+
+      startPrediction(
+        newTab,
+        updateTab,
+        predictionParameters,
+        setSnackbarMessages,
+        inputSmilesBar,
+      );
     } else {
       startPrediction(
         newTab,
@@ -112,53 +108,41 @@ const Toolbar: React.FC = () => {
     }
   }
 
-  const handleClearProject = () => {
+  const handleClearProject = async () => {
     const confirmOnClear = generalSettings
       .find((category) => category.settingsCategoryName === 'General')
       ?.settings.find((setting) => setting.key === 'confirmOnClear');
+
     if (confirmOnClear !== undefined && confirmOnClear.value === true) {
-      openConfirm.current(
-        'Confirmation',
-        'This action will permanently delete all molecule sketches and spectrum data from the current tab.\n\nAre you sure you want to proceed?',
-        () => {
-          if (!window.ketcher) {
-            setSnackbarMessages({
-              severity: 'error',
-              message: 'Failed to clear project: Ketcher instance not found.',
-            });
-            return;
-          }
+      const confirmed = openConfirm.current
+        ? await openConfirm.current(
+            'Confirmation',
+            'This action will permanently delete all molecule sketches and spectrum data from the current tab.\n\nAre you sure you want to proceed?',
+            <DontShowAgainPartial
+              settingsCategory="General"
+              settingsKey="confirmOnClear"
+            />,
+          )
+        : true;
 
-          window.ketcher.editor.clear();
-          clearActiveTab();
-
-          setSnackbarMessages({
-            severity: 'success',
-            message: 'Successfully cleared the current project',
-          });
-        },
-        <DontShowAgainPartial
-          settingsCategory="General"
-          settingsKey="confirmOnClear"
-        />,
-      );
-    } else {
-      if (!window.ketcher) {
-        setSnackbarMessages({
-          severity: 'error',
-          message: 'Failed to clear project: Ketcher instance not found.',
-        });
-        return;
-      }
-
-      window.ketcher.editor.clear();
-      clearActiveTab();
-
-      setSnackbarMessages({
-        severity: 'success',
-        message: 'Successfully cleared the current project',
-      });
+      if (!confirmed) return;
     }
+
+    if (!window.ketcher) {
+      setSnackbarMessages({
+        severity: 'error',
+        message: 'Failed to clear project: Ketcher instance not found.',
+      });
+      return;
+    }
+
+    window.ketcher.editor.clear();
+    clearActiveTab();
+
+    setSnackbarMessages({
+      severity: 'success',
+      message: 'Successfully cleared the current project',
+    });
   };
 
   return (

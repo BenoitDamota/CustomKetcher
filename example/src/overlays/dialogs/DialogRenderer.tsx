@@ -13,9 +13,8 @@ const DialogRenderer: React.FC = () => {
   const [confirmData, setConfirmData] = useState<{
     title: string;
     content: string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onConfirm: (...args: any[]) => void;
     htmlContent?: React.ReactNode;
+    resolve: (value: boolean) => void;
   } | null>(null);
 
   const { openAlert, openConfirm } = useAppContext();
@@ -29,12 +28,12 @@ const DialogRenderer: React.FC = () => {
   const openConfirmDialog = (
     title: string,
     content: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onConfirm: (...args: any[]) => void,
     htmlContent?: React.ReactNode,
-  ) => {
-    setConfirmData({ title, content, onConfirm, htmlContent });
-    setConfirmOpen(true);
+  ): Promise<boolean> => {
+    return new Promise((resolve) => {
+      setConfirmData({ title, content, htmlContent, resolve });
+      setConfirmOpen(true);
+    });
   };
 
   const closeAlertDialog = () => {
@@ -44,9 +43,7 @@ const DialogRenderer: React.FC = () => {
 
   const closeConfirmDialog = (confirmed: boolean) => {
     setConfirmOpen(false);
-    if (confirmed && confirmData?.onConfirm) {
-      confirmData.onConfirm();
-    }
+    confirmData?.resolve(confirmed);
     setConfirmData(null);
   };
 
