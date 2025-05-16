@@ -13,9 +13,34 @@ import {
   FormControlLabel,
   Stack,
   Typography,
+  SxProps,
+  Theme,
 } from '@mui/material';
 import { useAppContext } from '../../../context/AppContext';
 import { saveModelParameters } from '../../../utils/SettingsUtils';
+
+const requiredAsteriskStyle: React.CSSProperties = {
+  color: 'red',
+  verticalAlign: 'middle',
+};
+
+const menuItemManageSpanStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+};
+
+const manageIconStyle: React.CSSProperties = {
+  marginRight: 8,
+};
+
+const dividerStyle: React.CSSProperties = {
+  margin: '1rem 0px',
+  backgroundColor: '#cccccc',
+};
+
+const formControlStackSx: SxProps<Theme> = { mt: 3 };
+
+const buttonsStackSx: SxProps<Theme> = { mt: 3 };
 
 interface Props {
   onClose: () => void;
@@ -232,7 +257,7 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({ onClose }) => {
       <FormControl fullWidth margin="normal">
         <InputLabel id="model-select-label">
           Choose A Prediction Model
-          <span style={{ color: 'red', verticalAlign: 'middle' }}>{' *'}</span>
+          <span style={requiredAsteriskStyle}>{' *'}</span>
         </InputLabel>
         <Select
           labelId="model-select-label"
@@ -242,10 +267,10 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({ onClose }) => {
           onChange={handleModelChange}
         >
           <MenuItem value="__manage__">
-            <span style={{ display: 'flex', alignItems: 'center' }}>
+            <span style={menuItemManageSpanStyle}>
               <span
                 className="material-symbols-outlined"
-                style={{ marginRight: 8 }}
+                style={manageIconStyle}
               >
                 edit_note
               </span>
@@ -297,7 +322,7 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({ onClose }) => {
             }}
           />
 
-          <Divider style={{ margin: '1rem 0px', backgroundColor: '#cccccc' }} />
+          <Divider style={dividerStyle} />
 
           {/* Dynamic Parameters */}
           {predictionParameters.models.find(
@@ -332,11 +357,7 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({ onClose }) => {
                         <>
                           {param.label}
                           {param.required && (
-                            <span
-                              style={{ color: 'red', verticalAlign: 'middle' }}
-                            >
-                              {' *'}
-                            </span>
+                            <span style={requiredAsteriskStyle}>{' *'}</span>
                           )}
                         </>
                       }
@@ -351,11 +372,7 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({ onClose }) => {
                         <>
                           {param.label}
                           {param.required && (
-                            <span
-                              style={{ color: 'red', verticalAlign: 'middle' }}
-                            >
-                              {' *'}
-                            </span>
+                            <span style={requiredAsteriskStyle}>{' *'}</span>
                           )}
                         </>
                       }
@@ -378,14 +395,14 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({ onClose }) => {
         </>
       )}
 
-      <Divider style={{ margin: '1rem 0px', backgroundColor: '#cccccc' }} />
+      <Divider style={dividerStyle} />
 
       {/* Buttons */}
       <Stack
         direction="row"
         spacing={2}
         justifyContent="space-between"
-        sx={{ mt: 3 }}
+        sx={formControlStackSx}
       >
         <Button onClick={handleUseModel} color="secondary" variant="contained">
           Use this model
@@ -395,7 +412,7 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({ onClose }) => {
           direction="row"
           spacing={'16px'}
           justifyContent="flex-end"
-          sx={{ mt: 3 }}
+          sx={buttonsStackSx}
         >
           <Button onClick={handleApply} color="primary" variant="contained">
             Apply

@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import LeftPane from './LeftPan/LeftPan';
 import RightPan from './RightPan/RightPan';
 import { useAppContext } from '../context/AppContext';
@@ -6,8 +12,25 @@ import { Box, CircularProgress, Typography, Backdrop } from '@mui/material';
 
 export const MIN_WIDTH_LEFT_PAN = 550;
 export const RESIZE_BAR_WIDTH = 6;
-export const MIN_WIDTH_RIGHT_PAN = 350;
+export const MIN_WIDTH_RIGHT_PAN = 380;
 export const MINIMIZED_BAR_WIDTH = 30;
+
+const resizableLayoutDivStyle: React.CSSProperties = {
+  display: 'flex',
+  width: '100%',
+  height: '100%',
+  position: 'relative',
+};
+
+const separatorStyle: React.CSSProperties = {
+  width: RESIZE_BAR_WIDTH,
+  height: '100%',
+  cursor: 'col-resize',
+  background: '#525252',
+  zIndex: 39,
+};
+
+const rightPanDivStyle: React.CSSProperties = { flexGrow: 1, height: '100%' };
 
 const ResizableLayout: React.FC = () => {
   const { tabs, activeTab } = useAppContext();
@@ -147,19 +170,18 @@ const ResizableLayout: React.FC = () => {
     };
   });
 
+  const leftPanDivStyle = useMemo<React.CSSProperties>(
+    () => ({
+      width: leftWidth,
+      height: '100%',
+      minWidth: '30px',
+    }),
+    [leftWidth],
+  );
+
   return (
-    <div
-      style={{
-        display: 'flex',
-        width: '100%',
-        height: '100%',
-        position: 'relative',
-      }}
-    >
-      <div
-        className="menu-clair"
-        style={{ width: leftWidth, height: '100%', minWidth: '30px' }}
-      >
+    <div style={resizableLayoutDivStyle}>
+      <div className="menu-clair" style={leftPanDivStyle}>
         <LeftPane
           isLeftPanReduced={isLeftPanReduced}
           minimizeLeftPan={minimizeLeftPan}
@@ -171,18 +193,12 @@ const ResizableLayout: React.FC = () => {
         <span
           role="separator"
           aria-hidden="true"
-          style={{
-            width: RESIZE_BAR_WIDTH,
-            height: '100%',
-            cursor: 'col-resize',
-            background: '#525252',
-            zIndex: 39,
-          }}
+          style={separatorStyle}
           onMouseDown={handleMouseDown}
         />
       )}
 
-      <div className="menu-clair" style={{ flexGrow: 1, height: '100%' }}>
+      <div className="menu-clair" style={rightPanDivStyle}>
         <RightPan
           isRightPanReduced={isRightPanReduced}
           minimizeRightPan={minimizeRightPan}

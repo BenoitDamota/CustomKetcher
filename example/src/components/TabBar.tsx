@@ -1,7 +1,103 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { TabDataType } from '../types/TabDataType';
-import { Box, IconButton, Menu, MenuItem } from '@mui/material';
+import { Box, IconButton, Menu, MenuItem, SxProps, Theme } from '@mui/material';
+
+const containerBoxStyle: React.CSSProperties = {
+  backgroundColor: '#FCFCFC',
+  height: '40px',
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'flex-end',
+  gap: 1,
+  marginTop: '3px',
+  borderBottom: '3px solid #525252',
+  overflow: 'hidden',
+};
+
+const tabsWrapperStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'flex-end',
+  gap: '8px',
+};
+
+const newTabBoxStyle: SxProps<Theme> = {
+  display: 'flex',
+  minWidth: '40px',
+  paddingInline: 1,
+  backgroundColor: '#d9d9d9',
+  borderRadius: '4px',
+  marginBottom: '3px',
+  alignItems: 'center',
+  justifyContent: 'center',
+  color: '#525252',
+  cursor: 'pointer',
+  userSelect: 'none',
+  ':hover': { color: '#167782' },
+};
+
+const newTabButtonStyle: React.CSSProperties = {
+  all: 'unset',
+  color: 'inherit',
+};
+
+const tabButtonBaseStyle: React.CSSProperties = {
+  all: 'unset',
+  flexGrow: 1,
+  textAlign: 'center',
+  fontFamily: 'Inter, Roboto, sans-serif',
+};
+
+const closeButtonBaseStyle: React.CSSProperties = {
+  all: 'unset',
+  cursor: 'pointer',
+  marginLeft: 8,
+  color: 'inherit',
+};
+
+const menuIconButtonStyle: React.CSSProperties = { color: '#167782' };
+
+const closeButtonMenuStyle: React.CSSProperties = {
+  marginLeft: 'auto',
+  cursor: 'pointer',
+};
+
+// Styles dynamiques selon état isActive et index
+const getTabBoxStyle = (isActive: boolean, index: number): SxProps<Theme> => ({
+  display: 'flex',
+  minWidth: '40px',
+  paddingInline: 1,
+  bgcolor: isActive ? '#525252' : '#d9d9d9',
+  borderRadius: '4px',
+  borderTopLeftRadius: isActive && index === 0 ? '0px' : 'initial',
+  borderBottomRightRadius: isActive ? '0px' : '4px',
+  borderBottomLeftRadius: isActive ? '0px' : '4px',
+  marginBottom: isActive ? '0px' : '3px',
+  marginLeft: index === 0 && !isActive ? '8px' : '0px',
+  paddingBottom: isActive ? '3px' : '0px',
+  alignItems: 'center',
+  color: isActive ? '#fff' : '#525252',
+  cursor: 'pointer',
+  userSelect: 'none',
+  ':hover': {
+    color: isActive ? '#fff' : '#167782',
+    filter: isActive ? 'brightness(1.25)' : 'none',
+  },
+});
+
+const getMenuItemStyle = (isActive: boolean): SxProps<Theme> => ({
+  backgroundColor: isActive ? '#525252 ' : 'transparent',
+  color: isActive ? '#fff' : 'initial',
+  '&:hover': {
+    backgroundColor: isActive ? '#474747' : '#f0f0f0',
+    color: isActive ? '#fff' : 'inherit',
+  },
+});
+
+const getCloseButtonMenuStyle = (isActive: boolean): React.CSSProperties => ({
+  ...closeButtonMenuStyle,
+  color: isActive ? '#fff' : 'inherit',
+});
 
 const TabBar: React.FC = () => {
   const { tabs, activeTab, changeTab, newTab, closeTab } = useAppContext();
@@ -40,27 +136,8 @@ const TabBar: React.FC = () => {
 
   return (
     <>
-      <Box
-        ref={containerRef}
-        sx={{
-          backgroundColor: '#FCFCFC',
-          height: '40px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-end',
-          gap: 1,
-          marginTop: '3px',
-          borderBottom: '3px solid #525252',
-          overflow: 'hidden',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'flex-end',
-            gap: '8px',
-          }}
-        >
+      <Box ref={containerRef} sx={containerBoxStyle}>
+        <div style={tabsWrapperStyle}>
           {tabs.current.map((tab: TabDataType, index: number) => {
             const isActive = tab.id === activeTab.current;
 
@@ -69,39 +146,10 @@ const TabBar: React.FC = () => {
             return (
               <Box
                 key={tab.id}
-                sx={{
-                  display: 'flex',
-                  minWidth: '40px',
-                  paddingInline: 1,
-                  bgcolor: isActive ? '#525252' : '#d9d9d9',
-                  borderRadius: '4px',
-                  borderTopLeftRadius:
-                    isActive && index === 0 ? '0px' : 'initial',
-                  borderBottomRightRadius: isActive ? '0px' : '4px',
-                  borderBottomLeftRadius: isActive ? '0px' : '4px',
-                  marginBottom: isActive ? '0px' : '3px',
-                  marginLeft: index === 0 && !isActive ? '8px' : '0px',
-                  paddingBottom: isActive ? '3px' : '0px',
-                  alignItems: 'center',
-                  color: isActive ? '#fff' : '#525252',
-                  cursor: 'pointer',
-                  userSelect: 'none',
-                  ':hover': {
-                    color: isActive ? '#fff' : '#167782',
-                    filter: isActive ? 'brightness(1.25)' : 'none',
-                  },
-                }}
+                sx={getTabBoxStyle(isActive, index)}
                 onClick={() => changeTab(tab.id)}
               >
-                <button
-                  title={`Tab ${tab.id}`}
-                  style={{
-                    all: 'unset',
-                    flexGrow: 1,
-                    textAlign: 'center',
-                    fontFamily: 'Inter, Roboto, sans-serif',
-                  }}
-                >
+                <button title={`Tab ${tab.id}`} style={tabButtonBaseStyle}>
                   {`Tab ${tab.id}`}
                 </button>
                 <button
@@ -110,12 +158,7 @@ const TabBar: React.FC = () => {
                     e.stopPropagation();
                     closeTab(tab.id);
                   }}
-                  style={{
-                    all: 'unset',
-                    cursor: 'pointer',
-                    marginLeft: 8,
-                    color: 'inherit',
-                  }}
+                  style={closeButtonBaseStyle}
                   className="material-symbols-outlined hover-red"
                 >
                   close
@@ -125,20 +168,7 @@ const TabBar: React.FC = () => {
           })}
           <Box
             key="newTab"
-            sx={{
-              display: 'flex',
-              minWidth: '40px',
-              paddingInline: 1,
-              bgcolor: '#d9d9d9',
-              borderRadius: '4px',
-              marginBottom: '3px',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#525252',
-              cursor: 'pointer',
-              userSelect: 'none',
-              ':hover': { color: '#167782' },
-            }}
+            sx={newTabBoxStyle}
             onClick={() =>
               newTab({
                 smiles: '',
@@ -148,10 +178,7 @@ const TabBar: React.FC = () => {
           >
             <button
               title="New Tab"
-              style={{
-                all: 'unset',
-                color: 'inherit',
-              }}
+              style={newTabButtonStyle}
               className="material-symbols-outlined hover-primary"
             >
               add
@@ -162,7 +189,7 @@ const TabBar: React.FC = () => {
         <div>
           {tabs.current.length > maxVisibleTabs && (
             <>
-              <IconButton onClick={handleMenuOpen} sx={{ color: '#167782' }}>
+              <IconButton onClick={handleMenuOpen} sx={menuIconButtonStyle}>
                 <span className="material-symbols-outlined">more_horiz</span>
               </IconButton>
               <Menu
@@ -172,25 +199,11 @@ const TabBar: React.FC = () => {
               >
                 {tabs.current.map((tab, index) => {
                   if (index < maxVisibleTabs) return null;
+                  const isActive = tab.id === activeTab.current;
                   return (
                     <MenuItem
                       key={tab.id}
-                      sx={{
-                        backgroundColor:
-                          tab.id === activeTab.current
-                            ? '#525252 '
-                            : 'transparent',
-                        color:
-                          tab.id === activeTab.current ? '#fff' : 'initial',
-                        '&:hover': {
-                          backgroundColor:
-                            tab.id === activeTab.current
-                              ? '#474747'
-                              : '#f0f0f0',
-                          color:
-                            tab.id === activeTab.current ? '#fff' : 'inherit',
-                        },
-                      }}
+                      sx={getMenuItemStyle(isActive)}
                       onClick={() => {
                         changeTab(tab.id);
                         handleMenuClose();
@@ -204,12 +217,7 @@ const TabBar: React.FC = () => {
                           handleMenuClose();
                         }}
                         className="material-symbols-outlined hover-red"
-                        style={{
-                          marginLeft: 'auto',
-                          cursor: 'pointer',
-                          color:
-                            tab.id === activeTab.current ? '#fff' : 'inherit',
-                        }}
+                        style={getCloseButtonMenuStyle(isActive)}
                       >
                         close
                       </button>

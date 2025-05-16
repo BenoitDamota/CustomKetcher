@@ -9,6 +9,8 @@ import {
   Box,
   Typography,
   Stack,
+  SxProps,
+  Theme,
 } from '@mui/material';
 import { SpectrumDataPoint } from '../../../types/SpectrumDataType';
 import { useAppContext } from '../../../context/AppContext';
@@ -21,6 +23,41 @@ import {
   exportZIP,
 } from '../../../utils/exportUtils';
 import JSZip from 'jszip';
+
+const errorBoxSx: SxProps<Theme> = {
+  backgroundColor: '#fdecea',
+  borderRadius: 2,
+  border: '1px solid #f44336',
+};
+
+const jsonPreviewBoxSx: SxProps<Theme> = {
+  backgroundColor: '#f5f5f5',
+  borderRadius: 2,
+};
+
+const jsonPreviewTypographyStyle: React.CSSProperties = {
+  maxHeight: '350px',
+  overflowY: 'auto',
+};
+
+const zipPreviewBoxSx: SxProps<Theme> = {
+  backgroundColor: '#f5f5f5',
+  borderRadius: 2,
+};
+
+const imagePreviewBoxSx: SxProps<Theme> = {
+  display: 'flex',
+  justifyContent: 'center',
+};
+
+const imagePreviewStyle: React.CSSProperties = {
+  maxWidth: '100%',
+  height: 'auto',
+  borderRadius: 8,
+  border: '1px solid #ccc',
+};
+
+const stackSx: SxProps<Theme> = { mt: 3 };
 
 interface Props {
   onClose: () => void;
@@ -226,26 +263,15 @@ const ExportProjectModalTemplate: React.FC<Props> = ({ onClose }) => {
         <Typography variant="subtitle1">Preview :</Typography>
 
         {error ? (
-          <Box
-            mt={2}
-            p={2}
-            sx={{
-              backgroundColor: '#fdecea',
-              borderRadius: 2,
-              border: '1px solid #f44336',
-            }}
-          >
+          <Box mt={2} p={2} sx={errorBoxSx}>
             <Typography color="error">{error}</Typography>
           </Box>
         ) : exportType === 'json' ? (
-          <Box p={2} sx={{ backgroundColor: '#f5f5f5', borderRadius: 2 }}>
+          <Box p={2} sx={jsonPreviewBoxSx}>
             <Typography
               variant="body2"
               component="pre"
-              style={{
-                maxHeight: '350px',
-                overflowY: 'auto',
-              }}
+              style={jsonPreviewTypographyStyle}
             >
               {/* Use formatJsonContent to format the JSON for display */}
               <span
@@ -256,7 +282,7 @@ const ExportProjectModalTemplate: React.FC<Props> = ({ onClose }) => {
             </Typography>
           </Box>
         ) : exportType === 'zip' ? (
-          <Box p={2} sx={{ backgroundColor: '#f5f5f5', borderRadius: 2 }}>
+          <Box p={2} sx={zipPreviewBoxSx}>
             <Typography variant="body2">
               {previewData.startsWith('The ZIP') &&
                 previewData.split('\n').map((line, index) => (
@@ -268,30 +294,20 @@ const ExportProjectModalTemplate: React.FC<Props> = ({ onClose }) => {
             </Typography>
           </Box>
         ) : (
-          <Box p={2} sx={{ display: 'flex', justifyContent: 'center' }}>
+          <Box p={2} sx={imagePreviewBoxSx}>
             {previewData.startsWith('data:image') ||
             previewData.startsWith('blob:') ? (
               <img
                 src={previewData}
                 alt="Export Preview"
-                style={{
-                  maxWidth: '100%',
-                  height: 'auto',
-                  borderRadius: 8,
-                  border: '1px solid #ccc',
-                }}
+                style={imagePreviewStyle}
               />
             ) : null}
           </Box>
         )}
       </Box>
 
-      <Stack
-        direction="row"
-        spacing={2}
-        justifyContent="flex-end"
-        sx={{ mt: 3 }}
-      >
+      <Stack direction="row" spacing={2} justifyContent="flex-end" sx={stackSx}>
         <Button variant="outlined" color="secondary" onClick={onClose}>
           Cancel
         </Button>

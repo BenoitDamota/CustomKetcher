@@ -1,0 +1,21 @@
+.minimize_btn {
+    margin: 0;
+    padding: 0;
+    border-radius: 4px;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: #333;
+    transition: fill 0.2s ease;
+}
+
+.minimize_btn > svg {
+    width: 24px;
+    height: 24px;
+}
+
+.minimize_btn:hover {
+    color: #167782;
+}

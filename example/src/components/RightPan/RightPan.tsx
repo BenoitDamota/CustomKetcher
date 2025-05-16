@@ -1,6 +1,27 @@
 import { MINIMIZED_BAR_WIDTH } from '../ResizableLayout';
 import Spectrum from './Spectrum';
 
+const iconStyleTop: React.CSSProperties = {
+  position: 'absolute',
+  top: 0,
+  left: '50%',
+  transform: 'translateX(-50%)',
+};
+
+const iconStyleCenter: React.CSSProperties = {
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+};
+
+const spectrumDivStyle: React.CSSProperties = {
+  width: '100%',
+  height: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+};
+
 interface Props {
   isRightPanReduced: boolean;
   minimizeRightPan: () => void;
@@ -12,55 +33,33 @@ const RightPan: React.FC<Props> = ({
   minimizeRightPan,
   expandPanel,
 }) => {
+  const handleExpandRight = () => expandPanel('RIGHT');
+
+  const minimizedBarStyle: React.CSSProperties = {
+    all: 'unset',
+    display: 'block',
+    width: `${MINIMIZED_BAR_WIDTH}px`,
+    height: '100%',
+    backgroundColor: '#525252',
+    color: 'white',
+    position: 'relative',
+    cursor: 'pointer',
+  };
+
   return (
     <div style={{ height: '100%' }}>
       {isRightPanReduced && (
-        <button
-          style={{
-            all: 'unset',
-            display: 'block',
-            width: `${MINIMIZED_BAR_WIDTH}px`,
-            height: '100%',
-            backgroundColor: '#525252',
-            color: 'white',
-            position: 'relative',
-            cursor: 'pointer',
-          }}
-          onClick={() => expandPanel('RIGHT')}
-        >
-          <span
-            className="material-symbols-outlined"
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: '50%',
-              transform: 'translateX(-50%)',
-            }}
-          >
+        <button style={minimizedBarStyle} onClick={handleExpandRight}>
+          <span className="material-symbols-outlined" style={iconStyleTop}>
             search_insights
           </span>
-          <span
-            className="material-symbols-outlined"
-            style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-            }}
-          >
+          <span className="material-symbols-outlined" style={iconStyleCenter}>
             chevron_left
           </span>
         </button>
       )}
 
-      <div
-        style={{
-          width: '100%',
-          height: '100%',
-          display: isRightPanReduced ? 'none' : 'flex',
-          flexDirection: 'column',
-        }}
-      >
+      <div style={spectrumDivStyle}>
         <Spectrum minimizeRightPan={minimizeRightPan} />
       </div>
     </div>

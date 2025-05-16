@@ -1,6 +1,8 @@
-import { Checkbox, FormControlLabel } from '@mui/material';
+import { Checkbox, FormControlLabel, SxProps, Theme } from '@mui/material';
 import React from 'react';
 import { useAppContext } from '../../../context/AppContext';
+
+const formControlLabelStyle: SxProps<Theme> = { mt: 2 };
 
 interface Props {
   settingsCategory: string;
@@ -39,7 +41,7 @@ const DontShowAgainPartial: React.FC<Props> = ({
         />
       }
       label="Do not show this confirmation again"
-      sx={{ mt: 2 }}
+      sx={formControlLabelStyle}
     />
   );
 };

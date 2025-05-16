@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
 import Plot from 'react-plotly.js';
 import MinimizeButton from './MinimizeRightPanButton';
@@ -6,6 +6,21 @@ import { useAppContext } from '../../context/AppContext';
 import { SpectrumDataPoint } from '../../types/SpectrumDataType';
 import AutoZoomOnRegionButton from './AutomZoomOnRegionButton';
 import { FormControl, MenuItem, Select } from '@mui/material';
+import './Spectrum.module.css';
+
+const customButtonsDivStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'row',
+  justifyContent: 'center',
+  alignItems: 'center',
+  marginRight: '16px',
+  gap: '4px',
+};
+
+const fullWidthAndHeightStyle: React.CSSProperties = {
+  width: '100%',
+  height: '100%',
+};
 
 interface PlotlyHTMLElementWithFullLayout extends Plotly.PlotlyHTMLElement {
   _fullLayout: Plotly.Layout & {
@@ -65,6 +80,7 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
   const spectrumData = useMemo(() => {
     return (tabs.current.find((tab) => tab.id === activeTab.current)
       ?.spectrum || []) as SpectrumDataPoint[];
+    // Use the renderVersion to detect the rerender between tabs
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, tabs, renderVersion]);
 
@@ -93,7 +109,7 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
     });
 
     const regionList: SpectrumRegion[] = [];
-    grouped.forEach((group, index) => {
+    grouped.forEach((group: SpectrumDataPoint[], index: string) => {
       const ppms = group.map((p) => p.ppm);
       const intensities = group.map((p) => p.intensity);
 
@@ -129,12 +145,12 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
     return () => observer.disconnect();
   }, []);
 
-  const handlePlotReady = (
-    _: unknown,
-    graphDiv: Plotly.PlotlyHTMLElement | null,
-  ) => {
-    plotlyRef.current = graphDiv;
-  };
+  const handlePlotReady = useCallback(
+    (_: unknown, graphDiv: Plotly.PlotlyHTMLElement | null) => {
+      plotlyRef.current = graphDiv;
+    },
+    [plotlyRef],
+  );
 
   // Detection of clicks everywhere on the pyplot instead of the default click on points only
   useEffect(() => {
@@ -244,51 +260,29 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
     };
   }, [autoZoomOnRegion, openAlert, plotlyRef, regions, setSnackbarMessages]);
 
-  const buildRegionLookup = (
-    regions: SpectrumRegion[],
-  ): { start: number; end: number; regionId: string }[] => {
-    const sortedRegions = regions.sort((a, b) => {
-      const centerA = (a.ppmMin + a.ppmMax) / 2;
-      const centerB = (b.ppmMin + b.ppmMax) / 2;
-      return centerA - centerB;
-    });
-
-    const lookup: { start: number; end: number; regionId: string }[] = [];
-
-    sortedRegions.forEach((r, idx) => {
-      let startValue: number;
-      let endValue: number;
-
-      let centerA: number;
-      let centerB: number;
-
-      if (idx === 0) {
-        startValue = -Infinity;
-      } else {
-        const prevRegion = sortedRegions[idx - 1];
-        centerA = (r.ppmMin + r.ppmMax) / 2;
-        centerB = (prevRegion.ppmMin + prevRegion.ppmMax) / 2;
-        startValue = (centerA + centerB) / 2;
-      }
-
-      if (idx === sortedRegions.length - 1) {
-        endValue = Infinity;
-      } else {
-        const nextRegion = sortedRegions[idx + 1];
-        centerA = (r.ppmMin + r.ppmMax) / 2;
-        centerB = (nextRegion.ppmMin + nextRegion.ppmMax) / 2;
-        endValue = (centerA + centerB) / 2;
-      }
-
-      lookup.push({
-        start: startValue,
-        end: endValue,
+  // Build region lookup for mousemove highlight
+  const buildRegionLookup = useCallback((regions: SpectrumRegion[]) => {
+    if (regions.length === 0) return [];
+    const sorted = [...regions].sort(
+      (a, b) => (a.ppmMin + a.ppmMax) / 2 - (b.ppmMin + b.ppmMax) / 2,
+    );
+    return sorted.map((r, idx) => {
+      const center = (r.ppmMin + r.ppmMax) / 2;
+      const prevCenter =
+        idx > 0
+          ? (sorted[idx - 1].ppmMin + sorted[idx - 1].ppmMax) / 2
+          : -Infinity;
+      const nextCenter =
+        idx < sorted.length - 1
+          ? (sorted[idx + 1].ppmMin + sorted[idx + 1].ppmMax) / 2
+          : Infinity;
+      return {
+        start: idx === 0 ? -Infinity : (center + prevCenter) / 2,
+        end: idx === sorted.length - 1 ? Infinity : (center + nextCenter) / 2,
         regionId: r.regionId,
-      });
+      };
     });
-
-    return lookup;
-  };
+  }, []);
 
   const [regionLookup, setRegionLookup] = useState<
     { start: number; end: number; regionId: string }[]
@@ -296,7 +290,7 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
 
   useEffect(() => {
     setRegionLookup(buildRegionLookup(regions));
-  }, [regions]);
+  }, [buildRegionLookup, regions]);
 
   useEffect(() => {
     const plotEl = containerRef.current?.querySelector(
@@ -377,29 +371,33 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
     };
   }, [plotlyRef, regionLookup, regions]);
 
-  const handleRelayout = (event: RelayoutEvent) => {
-    const range0 = event['xaxis.range[0]'];
-    const range1 = event['xaxis.range[1]'];
+  const handleRelayout = useCallback(
+    (event: RelayoutEvent) => {
+      const range0 = event['xaxis.range[0]'];
+      const range1 = event['xaxis.range[1]'];
 
-    const plotDiv = plotlyRef.current;
+      if (
+        range0 !== undefined &&
+        range1 !== undefined &&
+        range0 < range1 &&
+        plotlyRef.current
+      ) {
+        Plotly.relayout(plotlyRef.current, {
+          'xaxis.range': [range1, range0],
+        });
+      }
+    },
+    [plotlyRef],
+  );
 
-    if (!plotDiv) return;
-
-    if (range0 !== undefined && range1 !== undefined && range0 < range1) {
-      Plotly.relayout(plotDiv, {
-        'xaxis.range': [range1, range0],
-      });
-    }
-  };
-
-  function truncateDecimalsStr(num: number, digits: number) {
+  const truncateDecimalsStr = useCallback((num: number, digits: number) => {
     const [intPart, decPart = ''] = String(num).split('.');
     const truncatedDec = decPart.slice(0, digits).padEnd(digits, '0');
     return `${intPart}.${truncatedDec}`;
-  }
+  }, []);
 
   return (
-    <div ref={containerRef} style={{ height: '100%' }}>
+    <div ref={containerRef} style={fullWidthAndHeightStyle}>
       <Plot
         data={[
           {
@@ -449,8 +447,9 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
           displayModeBar: true,
           displaylogo: false,
           responsive: true,
+          modeBarButtonsToRemove: ['resetScale2d'],
         }}
-        style={{ width: '100%', height: '100%' }}
+        style={fullWidthAndHeightStyle}
         useResizeHandler={true}
         onInitialized={handlePlotReady}
         onUpdate={handlePlotReady}
@@ -459,16 +458,7 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
 
       {modebarContainerIsReady &&
         ReactDOM.createPortal(
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'row',
-              justifyContent: 'center',
-              alignItems: 'center',
-              marginRight: '16px',
-              gap: '4px',
-            }}
-          >
+          <div style={customButtonsDivStyle}>
             <FormControl variant="filled" sx={{ m: 1, minWidth: 120 }}>
               <Select
                 labelId="demo-simple-select-filled-label"
@@ -492,75 +482,6 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
           </div>,
           document.querySelector('.modebar-container') as Element,
         )}
-
-      {/* Custom UI style */}
-      <style>{`
-        .modebar-container {
-          display: flex;
-          flex-direction: row;
-          align-items: center;
-          justify-content: space-between;
-          gap: 0px;
-          height: 36px;
-          background-color: #ffffff;
-          box-shadow: 0px 2px 5px rgba(103, 104, 132, 0.15);
-        }
-
-        .js-plotly-plot .plotly .modebar {
-          position: unset !important;
-        }
-
-        .js-plotly-plot .plotly .modebar .modebar-btn {
-          font-size: 18px;
-        }
-
-        .js-plotly-plot .plotly .modebar .modebar-btn > svg > path {
-          fill: #333 !important;
-        }
-
-        .js-plotly-plot .plotly .modebar .modebar-btn.active > svg > path,
-        .js-plotly-plot .plotly .modebar .modebar-btn:hover > svg > path {
-          fill: #167782 !important;
-        }
-
-        .js-plotly-plot .plotly .modebar .modebar-btn.active:hover > svg > path {
-          filter: brightness(1.3);
-        }
-
-        /* Change the tooltip style so it match the global style */
-        .plotly .modebar-btn[data-title]:hover::after {
-          content: attr(data-title);
-          background-color: rgb(255, 255, 255);  /* Fond clair avec transparence */
-          color: #333;
-          padding: 5px 10px;
-          border-radius: 2px;
-          border: 1px solid #333;
-          font-size: 12px;
-          white-space: nowrap;
-          box-shadow: none;
-          z-index: 9999;
-          opacity: 0;
-          transition: opacity 0.3s ease-in-out;
-        }
-        .plotly .modebar-btn[data-title]:hover::after {
-          opacity: 1;
-        }
-
-        /* Change order so that the tooltip fit */
-        .modebar {
-          display: flex;
-          flex-direction: row;
-        }
-        .modebar-group:nth-child(1) {
-          order: 2;
-        }
-        .modebar-group:nth-child(2) {
-          order: 1;
-        }
-        .modebar-group:nth-child(3) {
-          order: 3;
-        }
-      `}</style>
     </div>
   );
 };

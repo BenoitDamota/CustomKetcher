@@ -1,0 +1,73 @@
+
+:global(.modebar) {
+    display: flex;
+    flex-direction: row;
+}
+
+:global(.modebar-container) {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0;
+    height: 36px;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(103, 104, 132, 0.15);
+}
+
+/* Reorder modebar groups to control button placement */
+
+:global(div.modebar-group) {
+    padding-inline: 0 !important;
+}
+
+:global(.modebar-group:nth-child(1)) {
+    order: 2;
+}
+
+:global(.modebar-group:nth-child(2)) {
+    order: 1;
+}
+
+:global(.modebar-group:nth-child(3)) {
+    order: 3;
+}
+
+:global(.js-plotly-plot .plotly .modebar) {
+    position: unset !important;
+}
+
+
+:global(.js-plotly-plot .plotly .modebar .modebar-btn) {
+    font-size: 18px;
+}
+
+/* Customize tooltip style to match global UI */
+:global(.plotly .modebar-btn[data-title]:hover::after) {
+    content: attr(data-title);
+    background-color: rgb(255, 255, 255);
+    color: #333;
+    padding: 5px 10px;
+    border-radius: 2px;
+    border: 1px solid #333;
+    font-size: 12px;
+    white-space: nowrap;
+    box-shadow: none;
+    z-index: 9999;
+    opacity: 1;
+    transition: opacity 0.3s ease-in-out;
+}
+
+/* Override button and icon styles in Plotly modebar */
+:global(.js-plotly-plot .plotly .modebar .modebar-btn > svg > path) {
+    fill: #333 !important;
+}
+
+:global(.js-plotly-plot .plotly .modebar .modebar-btn.active > svg > path),
+:global(.js-plotly-plot .plotly .modebar .modebar-btn:hover > svg > path) {
+    fill: #167782 !important;
+}
+
+:global(.js-plotly-plot .plotly .modebar .modebar-btn.active:hover > svg > path) {
+    filter: brightness(1.3);
+}

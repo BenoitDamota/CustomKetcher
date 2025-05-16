@@ -21,6 +21,14 @@ import { useAppContext } from '../../../context/AppContext';
 import { saveModelParameters } from '../../../utils/SettingsUtils';
 import { ModelParametersType } from '../../../types/ModelParametersType';
 
+const dialogContentStyle: React.CSSProperties = {
+  marginBottom: '8px',
+};
+
+const expandIconStyle: React.CSSProperties = {
+  marginLeft: '16px',
+};
+
 const ManagePredictionModelsModal: React.FC = () => {
   const {
     predictionParameters,
@@ -156,11 +164,7 @@ const ManagePredictionModelsModal: React.FC = () => {
 
   return (
     <Stack spacing={2}>
-      <DialogContentText
-        style={{
-          marginBottom: '8px',
-        }}
-      >
+      <DialogContentText style={dialogContentStyle}>
         <strong>Manage Prediction Model</strong>
       </DialogContentText>
 
@@ -169,9 +173,7 @@ const ManagePredictionModelsModal: React.FC = () => {
           <AccordionSummary
             expandIcon={
               <span
-                style={{
-                  marginLeft: '16px',
-                }}
+                style={expandIconStyle}
                 className="material-symbols-outlined"
               >
                 arrow_drop_down
