@@ -207,7 +207,7 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
                 setSnackbarMessages({
                   severity: 'error',
                   message:
-                    'An error occurred while trying to layout the molecule.',
+                    'An error occurred while trying to layout the molecule',
                 });
               });
           }

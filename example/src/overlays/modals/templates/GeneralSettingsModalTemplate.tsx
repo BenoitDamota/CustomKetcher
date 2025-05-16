@@ -15,8 +15,6 @@ import {
   TextField,
   Typography,
   FormControlLabel,
-  Snackbar,
-  Alert,
   FormLabel,
 } from '@mui/material';
 import {
@@ -35,19 +33,16 @@ import { ModelParameters } from '../../../types/ModelParametersType';
 
 interface Props {
   onClose: () => void;
-  timeoutRef?: React.MutableRefObject<NodeJS.Timeout | null>;
 }
 
-const SettingsModalTemplate: React.FC<Props> = ({ onClose, timeoutRef }) => {
+const SettingsModalTemplate: React.FC<Props> = ({ onClose }) => {
   const {
     generalSettings,
     setGeneralSettings,
     openConfirm,
     setPredictionParameters,
+    setSnackbarMessages,
   } = useAppContext();
-
-  const [errorMessages, setErrorMessages] = useState<string>('');
-  const [successMessage, setSuccessMessage] = useState<string>('');
 
   // Init values with stocked values or default
   const [values, setValues] = useState<
@@ -88,6 +83,12 @@ const SettingsModalTemplate: React.FC<Props> = ({ onClose, timeoutRef }) => {
       }),
     );
     setValues(initial);
+
+    setSnackbarMessages({
+      severity: 'success',
+      message:
+        'All settings have been successfully restored to their default values',
+    });
   };
 
   const handleFactoryReset = async () => {
@@ -101,20 +102,54 @@ const SettingsModalTemplate: React.FC<Props> = ({ onClose, timeoutRef }) => {
     if (!confirmed) return;
 
     try {
-      await resetGeneralSettingsToDefault();
+      if (!(await resetGeneralSettingsToDefault())) {
+        setSnackbarMessages({
+          severity: 'error',
+          message: 'Failed to reset General Settings to default',
+        });
+        return;
+      }
       const settings: GeneralSettings | null = await loadGeneralSettings();
       if (settings) {
         setGeneralSettings(settings);
+      } else {
+        setSnackbarMessages({
+          severity: 'error',
+          message: 'Failed to load General Settings after default',
+        });
+        return;
       }
 
-      await resetModelParametersToDefault();
+      if (!(await resetModelParametersToDefault())) {
+        setSnackbarMessages({
+          severity: 'error',
+          message: 'Failed to reset General Settings to default',
+        });
+        return;
+      }
       const parameters: ModelParameters | null = await loadModelParameters();
       if (parameters) {
         setPredictionParameters(parameters);
+      } else {
+        setSnackbarMessages({
+          severity: 'error',
+          message: 'Failed to load Models Parameters after default',
+        });
+        return;
+      }
+
+      if (parameters && settings) {
+        setSnackbarMessages({
+          severity: 'success',
+          message: 'Factory reset completed successfully',
+        });
       }
     } catch (error) {
-      console.error('Error during factory reset:', error);
-      setErrorMessages('Error during factory reset');
+      console.error('Error during the factory reset:', error);
+      setSnackbarMessages({
+        severity: 'error',
+        message: 'Error during the factory reset',
+      });
     }
   };
 
@@ -130,27 +165,19 @@ const SettingsModalTemplate: React.FC<Props> = ({ onClose, timeoutRef }) => {
     setGeneralSettings(updatedCategories);
     const saveResult = await saveGeneralSettings(updatedCategories);
     if (!saveResult) {
-      setErrorMessages(
-        'An error occurred while saving the settings. Please try again.',
-      );
+      setSnackbarMessages({
+        severity: 'error',
+        message:
+          'An error occurred while saving the settings. Please try again.',
+      });
       return;
     }
 
-    setSuccessMessage('Settings successfully applied');
+    setSnackbarMessages({
+      severity: 'success',
+      message: 'Settings successfully applied',
+    });
 
-    if (timeoutRef) {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      timeoutRef.current = setTimeout(() => {
-        setSuccessMessage('');
-        onClose();
-      }, 3000);
-    }
-  };
-
-  const customOnClose = () => {
-    if (timeoutRef) {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    }
     onClose();
   };
 
@@ -266,7 +293,7 @@ const SettingsModalTemplate: React.FC<Props> = ({ onClose, timeoutRef }) => {
           Reset To Default
         </Button>
         <Stack direction="row-reverse" spacing={2} justifyContent="flex-end">
-          <Button variant="outlined" color="secondary" onClick={customOnClose}>
+          <Button variant="outlined" color="secondary" onClick={onClose}>
             Cancel
           </Button>
           <Button variant="contained" color="primary" onClick={handleApply}>
@@ -274,32 +301,6 @@ const SettingsModalTemplate: React.FC<Props> = ({ onClose, timeoutRef }) => {
           </Button>
         </Stack>
       </Stack>
-
-      {/* Error Snackbar */}
-      {errorMessages && (
-        <Snackbar
-          open={!!errorMessages}
-          autoHideDuration={3500}
-          onClose={() => setErrorMessages('')}
-        >
-          <Alert onClose={() => setErrorMessages('')} severity="error">
-            {errorMessages}
-          </Alert>
-        </Snackbar>
-      )}
-
-      {/* Success Snackbar */}
-      {successMessage && (
-        <Snackbar
-          open={!!successMessage}
-          autoHideDuration={3500}
-          onClose={() => setSuccessMessage('')}
-        >
-          <Alert onClose={() => setSuccessMessage('')} severity="success">
-            {successMessage}
-          </Alert>
-        </Snackbar>
-      )}
     </DialogContent>
   );
 };

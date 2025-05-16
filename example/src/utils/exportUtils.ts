@@ -15,11 +15,11 @@ export const exportJSON = async (
 > => {
   try {
     if (!window.ketcher) {
-      throw new Error('Ketcher is not available.');
+      throw new Error('Ketcher is not available');
     }
 
     if (!(await window.ketcher.getSmiles())) {
-      return { error: 'No molecules found in Ketcher.' };
+      return { error: 'No molecules found in Ketcher' };
     }
 
     const smiles: string | null = await getKekuleSmilesFromKetcher(
@@ -42,7 +42,7 @@ export const exportJSON = async (
     if (err instanceof Error) {
       return { error: err.message };
     }
-    return { error: 'An unknown error occurred while generating the JSON.' };
+    return { error: 'An unknown error occurred while generating the JSON' };
   }
 };
 
@@ -64,7 +64,7 @@ export const exportSpectrumIMG = async (
       );
 
     const base64Image = await getSpectrumImage();
-    if (!base64Image) throw new Error('Failed to generate image.');
+    if (!base64Image) throw new Error('Failed to generate image');
 
     const res = await fetch(base64Image);
     const blob = await res.blob();
@@ -74,7 +74,7 @@ export const exportSpectrumIMG = async (
     if (err instanceof Error) {
       return { error: err.message };
     }
-    return { error: 'Unknown error during image export.' };
+    return { error: 'Unknown error during image export' };
   }
 };
 
@@ -86,11 +86,11 @@ export const exportMolIMG = async (
 > => {
   try {
     if (!window.ketcher) {
-      throw new Error('Ketcher is not available.');
+      throw new Error('Ketcher is not available');
     }
 
     if (!(await window.ketcher.getSmiles())) {
-      return { error: 'No molecules found in Ketcher.' };
+      return { error: 'No molecules found in Ketcher' };
     }
 
     const smiles: string | null = await getKekuleSmilesFromKetcher(
@@ -120,16 +120,16 @@ export const exportMolIMG = async (
         severity: 'error',
         message:
           error.response?.data?.error ||
-          'Error from backend while generating molecule image.',
+          'Error from backend while generating molecule image',
       });
     } else {
       console.error('Unknown error during molecule image export:', error);
       setSnackbarMessages({
         severity: 'error',
-        message: 'Unknown error during molecule image export.',
+        message: 'Unknown error during molecule image export',
       });
     }
-    return { error: 'Molecule image export failed.' };
+    return { error: 'Molecule image export failed' };
   }
 };
 
@@ -187,6 +187,6 @@ export const exportZIP = async (
     if (err instanceof Error) {
       return { error: err.message };
     }
-    return { error: 'An unknown error occurred while generating the ZIP.' };
+    return { error: 'An unknown error occurred while generating the ZIP' };
   }
 };

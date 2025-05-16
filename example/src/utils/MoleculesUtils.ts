@@ -7,17 +7,17 @@ export const getKekuleSmilesFromKetcher = async (
 ): Promise<string | null> => {
   try {
     if (!window.ketcher) {
-      console.error('Ketcher is not loaded.');
+      console.error('Ketcher is not loaded');
       return null;
     }
 
     const smiles = await window.ketcher.getSmiles();
 
     if (!smiles) {
-      console.log('getKekuleSmilesFromKetcher : No SMILES found in Ketcher.');
+      console.log('getKekuleSmilesFromKetcher : No SMILES found in Ketcher');
       setSnackbarMessages({
         severity: 'warning',
-        message: 'No molecules found in Ketcher.',
+        message: 'No molecules found in Ketcher',
       });
       return null;
     }
@@ -41,7 +41,7 @@ export const getKekuleSmilesFromKetcher = async (
     }
     setSnackbarMessages({
       severity: 'error',
-      message: 'Error during SMILES conversion.',
+      message: 'Error during SMILES conversion',
     });
     return null;
   }

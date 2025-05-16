@@ -11,8 +11,6 @@ import {
   SelectChangeEvent,
   Switch,
   FormControlLabel,
-  Snackbar,
-  Alert,
   Stack,
   Typography,
 } from '@mui/material';
@@ -21,13 +19,9 @@ import { saveModelParameters } from '../../../utils/SettingsUtils';
 
 interface Props {
   onClose: () => void;
-  timeoutRef?: React.MutableRefObject<NodeJS.Timeout | null>;
 }
 
-const PredictionParametersModalTemplate: React.FC<Props> = ({
-  onClose,
-  timeoutRef,
-}) => {
+const PredictionParametersModalTemplate: React.FC<Props> = ({ onClose }) => {
   const {
     predictionParameters,
     setPredictionParameters,
@@ -39,10 +33,10 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({
   const [modelValues, setModelValues] = useState<{
     [key: string]: string | number | boolean | undefined;
   }>({});
+
   const [errorMessages, setErrorMessages] = useState<{
     [key: string]: string;
   }>({});
-  const [successMessage, setSuccessMessage] = useState<string>('');
 
   const selectedModelEndpoint = predictionParameters.models.find(
     (model) => model.modelName === selectedModel,
@@ -125,15 +119,23 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({
     }
 
     setErrorMessages(errors);
-    return Object.keys(errors).length === 0;
+
+    const isValid = Object.keys(errors).length === 0;
+    if (!isValid) {
+      setSnackbarMessages({
+        severity: 'error',
+        message:
+          'Please fill in the required field: ' +
+          Object.values(errors).join(', '),
+      });
+    }
+
+    return isValid;
   };
 
   const handleApply = () => {
     if (selectedModel === '') {
-      setErrorMessages((prevErrors) => ({
-        ...prevErrors,
-        noModel: 'No model selected',
-      }));
+      setSnackbarMessages({ severity: 'error', message: 'No model selected' });
       return;
     }
 
@@ -164,15 +166,11 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({
 
     saveModelParameters(newParameters).then((ok) => {
       if (ok) {
-        setSuccessMessage('Parameters successfully applied');
-
-        if (timeoutRef) {
-          if (timeoutRef.current) clearTimeout(timeoutRef.current);
-          timeoutRef.current = setTimeout(() => {
-            setSuccessMessage('');
-            onClose();
-          }, 3000);
-        }
+        setSnackbarMessages({
+          severity: 'success',
+          message: 'Parameters successfully applied',
+        });
+        onClose();
       } else {
         setSnackbarMessages({
           severity: 'error',
@@ -186,7 +184,7 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({
     if (!selectedModel) {
       setSnackbarMessages({
         severity: 'warning',
-        message: 'Please select a model before proceeding.',
+        message: 'Please select a model before proceeding',
       });
       return;
     }
@@ -204,15 +202,10 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({
 
     saveModelParameters(newParameters).then((ok) => {
       if (ok) {
-        setSuccessMessage('Prediction model selected successfully.');
-
-        if (timeoutRef) {
-          if (timeoutRef.current) clearTimeout(timeoutRef.current);
-          timeoutRef.current = setTimeout(() => {
-            setSuccessMessage('');
-            onClose();
-          }, 3000);
-        }
+        setSnackbarMessages({
+          severity: 'success',
+          message: `Prediction model '${selectedModel}' selected successfully`,
+        });
       } else {
         setPredictionParameters((prevPredictionParameters) => {
           return {
@@ -227,13 +220,6 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({
         });
       }
     });
-  };
-
-  const customOnClose = () => {
-    if (timeoutRef) {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    }
-    onClose();
   };
 
   return (
@@ -380,7 +366,9 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({
                       margin="normal"
                       error={!!errorMessage}
                       helperText={
-                        errorMessage ? `Fil the field : ${errorMessage}` : ''
+                        errorMessage
+                          ? `Please fil the field ${errorMessage}`
+                          : ''
                       }
                     />
                   );
@@ -412,38 +400,11 @@ const PredictionParametersModalTemplate: React.FC<Props> = ({
           <Button onClick={handleApply} color="primary" variant="contained">
             Apply
           </Button>
-          <Button onClick={customOnClose} color="secondary" variant="outlined">
+          <Button onClick={onClose} color="secondary" variant="outlined">
             Cancel
           </Button>
         </Stack>
       </Stack>
-
-      {/* Error Snackbar */}
-      <Snackbar
-        open={Object.keys(errorMessages).length > 0}
-        autoHideDuration={6000}
-        onClose={() => setErrorMessages({})}
-      >
-        <Alert onClose={() => setErrorMessages({})} severity="error">
-          {errorMessages.noModel
-            ? errorMessages.noModel
-            : 'Please fill in the required field: ' +
-              Object.values(errorMessages).join(', ')}
-        </Alert>
-      </Snackbar>
-
-      {/* Success Snackbar */}
-      {successMessage && (
-        <Snackbar
-          open={!!successMessage}
-          autoHideDuration={3500}
-          onClose={() => setSuccessMessage('')}
-        >
-          <Alert onClose={() => setSuccessMessage('')} severity="success">
-            {successMessage}
-          </Alert>
-        </Snackbar>
-      )}
     </>
   );
 };

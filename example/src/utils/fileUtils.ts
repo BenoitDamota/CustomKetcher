@@ -57,16 +57,16 @@ export async function loadProjectFile(
           parsedContent.molecules.data.includes('.')
         ) {
           result.errors =
-            'molecule data should only contain a single molecule (no dot allowed).';
+            'molecule data should only contain a single molecule (no dot allowed)';
         } else {
           result.success = `File loaded successfully! \n\n Molecule : ${parsedContent.molecules.data}`;
           result.data = parsedContent;
         }
       } else {
-        result.errors = 'invalid JSON structure.';
+        result.errors = 'invalid JSON structure';
       }
     } catch (error) {
-      result.errors = 'failed to parse JSON.';
+      result.errors = 'failed to parse JSON';
     }
 
     return result;
@@ -93,12 +93,12 @@ export async function loadProjectFile(
       return result;
     } catch (error) {
       console.log(error);
-      result.errors = 'failed to load JCAMP from server.';
+      result.errors = 'failed to load JCAMP from server';
       return result;
     }
   }
 
-  result.errors = 'unsupported file format.';
+  result.errors = 'unsupported file format';
   return result;
 }
 
@@ -120,7 +120,7 @@ export function openFileInput(
         callback(file, fileContent);
       };
       reader.onerror = () => {
-        console.error('Failed to read the file.');
+        console.error('Failed to read the file');
       };
 
       // JSON only needs fileContent, JCAMP doesn’t

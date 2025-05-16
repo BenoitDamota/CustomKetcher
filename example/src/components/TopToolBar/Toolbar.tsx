@@ -131,7 +131,7 @@ const Toolbar: React.FC = () => {
     if (!window.ketcher) {
       setSnackbarMessages({
         severity: 'error',
-        message: 'Failed to clear project: Ketcher instance not found.',
+        message: 'Failed to clear project: Ketcher instance not found',
       });
       return;
     }

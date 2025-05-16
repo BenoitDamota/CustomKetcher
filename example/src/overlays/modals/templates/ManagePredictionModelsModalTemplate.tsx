@@ -46,8 +46,7 @@ const ManagePredictionModelsModal: React.FC = () => {
     if (!newModel.modelName || !newModel.endpoint) {
       setSnackbarMessages({
         severity: 'warning',
-        message:
-          'Both model name and endpoint are required to add a new model.',
+        message: 'Both model name and endpoint are required to add a new model',
       });
       return;
     }
@@ -56,7 +55,7 @@ const ManagePredictionModelsModal: React.FC = () => {
     if (exists) {
       setSnackbarMessages({
         severity: 'warning',
-        message: 'A model with this name already exists.',
+        message: 'A model with this name already exists',
       });
       return;
     }
@@ -87,7 +86,7 @@ const ManagePredictionModelsModal: React.FC = () => {
           if (param.type === 'number' && isNaN(Number(param.default))) {
             setSnackbarMessages({
               severity: 'error',
-              message: `Default value for "${param.key}" must be a number.`,
+              message: `Default value for "${param.key}" must be a number`,
             });
             return;
           }
@@ -99,7 +98,7 @@ const ManagePredictionModelsModal: React.FC = () => {
           ) {
             setSnackbarMessages({
               severity: 'error',
-              message: `Default value for "${param.key}" must be "true" or "false".`,
+              message: `Default value for "${param.key}" must be "true" or "false"`,
             });
             return;
           }
@@ -144,13 +143,13 @@ const ManagePredictionModelsModal: React.FC = () => {
     if (ok) {
       setSnackbarMessages({
         severity: 'success',
-        message: 'Model list updated successfully.',
+        message: 'Model list updated successfully',
       });
       openModal('PredictionParameters');
     } else {
       setSnackbarMessages({
         severity: 'error',
-        message: 'Failed to update models.',
+        message: 'Failed to update models',
       });
     }
   };

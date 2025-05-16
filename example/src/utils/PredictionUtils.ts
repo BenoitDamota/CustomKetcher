@@ -22,10 +22,10 @@ export const startPrediction = async (
 
     if (!smilesArg) {
       if (!window.ketcher) {
-        console.error('Ketcher is not loaded.');
+        console.error('Ketcher is not loaded');
         setSnackbarMessages({
           severity: 'error',
-          message: 'Ketcher is not loaded.',
+          message: 'Ketcher is not loaded',
         });
         return null;
       }
@@ -33,10 +33,10 @@ export const startPrediction = async (
       smiles = await window.ketcher.getSmiles();
 
       if (!smiles) {
-        console.warn('No SMILES found in Ketcher.');
+        console.warn('No SMILES found in Ketcher');
         setSnackbarMessages({
           severity: 'warning',
-          message: 'No molecules found in Ketcher.',
+          message: 'No molecules found in Ketcher',
         });
         return null;
       }
@@ -48,7 +48,7 @@ export const startPrediction = async (
 
     if (!modelParameters) {
       console.error(
-        'Could not find parameters for the selected prediction model.',
+        'Could not find parameters for the selected prediction model',
       );
       setSnackbarMessages({
         severity: 'error',
@@ -88,7 +88,7 @@ export const startPrediction = async (
     if (result) {
       setSnackbarMessages({
         severity: 'success',
-        message: `Tab ${newTabId} : Prediction result received.`,
+        message: `Tab ${newTabId} : Prediction result received`,
       });
     }
 
@@ -117,7 +117,7 @@ export const startPrediction = async (
     }
     setSnackbarMessages({
       severity: 'error',
-      message: 'Error during the prediction.',
+      message: 'Error during the prediction',
     });
     return null;
   }

@@ -1,4 +1,3 @@
-import React, { useRef } from 'react';
 import { Dialog, DialogTitle, DialogContent } from '@mui/material';
 import { useAppContext } from '../../context/AppContext';
 
@@ -10,25 +9,16 @@ interface ModalTemplateProps {
 const ModalTemplate: React.FC<ModalTemplateProps> = ({ children, onClose }) => {
   const { activeModal } = useAppContext();
 
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  const customOnClose = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    onClose();
-  };
-
   return (
     <Dialog
       open
-      onClose={customOnClose}
+      onClose={onClose}
       fullWidth
       maxWidth={activeModal === 'ManagePredictionModels' ? 'md' : 'sm'}
     >
       <DialogTitle>
         <button
-          onClick={customOnClose}
+          onClick={onClose}
           className="material-symbols-outlined hover-red"
           style={{
             fontSize: '1.5rem',
@@ -44,11 +34,7 @@ const ModalTemplate: React.FC<ModalTemplateProps> = ({ children, onClose }) => {
         </button>
         {/* Titre dynamique ajouté ici */}
       </DialogTitle>
-      <DialogContent>
-        {React.cloneElement(children as React.ReactElement, {
-          timeoutRef,
-        })}
-      </DialogContent>
+      <DialogContent>{children}</DialogContent>
     </Dialog>
   );
 };
