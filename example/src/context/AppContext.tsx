@@ -1,57 +1,15 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { GeneralSettings } from '../types/GeneralSettingsType';
 import { ModelParameters } from '../types/ModelParametersType';
-
+import { SnackbarMessage } from '../types/SnackbarMessage';
+import { TabDataType } from '../types/TabDataType';
+import { AppContextType, ModalName } from '../types/AppContextType';
 import {
   loadGeneralSettings,
   loadModelParameters,
 } from '../utils/SettingsUtils';
-import { SnackbarMessage } from '../types/SnackbarMessage';
-import { TabDataType } from '../types/TabDataType';
 import { getKekuleSmilesFromKetcher } from '../utils/MoleculesUtils';
-
-type ModalName =
-  | 'ExportProject'
-  | 'PredictionParameters'
-  | 'ManagePredictionModels'
-  | 'GeneralSettings'
-  | 'About'
-  | null;
-
-type AppContextType = {
-  ketcherRef: React.MutableRefObject<unknown>;
-  plotlyRef: React.MutableRefObject<Plotly.PlotlyHTMLElement | null>;
-  generalSettings: GeneralSettings;
-  setGeneralSettings: React.Dispatch<React.SetStateAction<GeneralSettings>>;
-  predictionParameters: ModelParameters;
-  setPredictionParameters: React.Dispatch<
-    React.SetStateAction<ModelParameters>
-  >;
-  tabs: React.MutableRefObject<TabDataType[]>;
-  activeTab: React.MutableRefObject<number>;
-  changeTab: (newTabId: number) => Promise<void>;
-  clearActiveTab: () => void;
-  newTab: (data: Omit<TabDataType, 'id'>) => Promise<number>;
-  updateTab: (id: number, data: Omit<TabDataType, 'id'>) => Promise<boolean>;
-  closeTab: (tabId: number) => void;
-  openAlert: React.MutableRefObject<(title: string, content: string) => void>;
-  openConfirm: React.MutableRefObject<
-    | ((
-        title: string,
-        content: string,
-        htmlContent?: React.ReactNode,
-      ) => Promise<boolean>)
-    | null
-  >;
-  openModal: (name: ModalName) => void;
-  closeModal: () => void;
-  activeModal: ModalName;
-  snackbarMessages: SnackbarMessage;
-  setSnackbarMessages: React.Dispatch<React.SetStateAction<SnackbarMessage>>;
-  getSpectrumImage?: () => Promise<string | null>;
-  setGetSpectrumImage: (fn: () => Promise<string | null>) => void;
-  renderVersion: number;
-};
+import { Mutex } from '../utils/mutex';
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -84,7 +42,19 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     },
   ]);
 
+  const mutexRef = useRef(new Mutex());
   const nextTabId = useRef(2);
+
+  const getNextTabId = async (): Promise<number> => {
+    const unlock = await mutexRef.current.lock();
+    try {
+      const id = nextTabId.current;
+      nextTabId.current++;
+      return id;
+    } finally {
+      unlock();
+    }
+  };
 
   const activeTab = useRef<number>(1);
 
@@ -168,7 +138,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const newTab = async (data: Omit<TabDataType, 'id'>): Promise<number> => {
-    const newTabId = nextTabId.current++;
+    const newTabId = await getNextTabId();
 
     const newTab: TabDataType = {
       ...data,
@@ -267,7 +237,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
     if (tabs.current.length === 0) {
       const emptyTab: TabDataType = {
-        id: nextTabId.current++,
+        id: await getNextTabId(),
         status: 'ready',
         smiles: '',
         spectrum: [],
@@ -290,87 +260,54 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     rerender();
   };
 
-  useEffect(() => {
-    let isMounted = true;
+  const fetchWithRetry = async <T extends GeneralSettings | ModelParameters>(
+    fetchFn: () => Promise<T | null>,
+    setter: React.Dispatch<React.SetStateAction<T>>,
+    label: string,
+    isMounted: () => boolean,
+    maxRetries = 10,
+    interval = 3000,
+  ): Promise<void> => {
+    const delay = (ms: number) =>
+      new Promise((resolve) => setTimeout(resolve, ms));
 
-    const fetchGeneralSettingsWithRetry = async () => {
-      const delay = (ms: number) =>
-        new Promise((resolve) => setTimeout(resolve, ms));
-      const retryInterval = 3000;
-      const maxRetries = 10;
-
-      for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        const settings = await loadGeneralSettings();
-        if (settings && isMounted) {
-          setGeneralSettings(settings);
-          console.log('settings loaded', settings);
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      if (!isMounted()) return;
+      try {
+        const data = await fetchFn();
+        if (data !== null) {
+          if (!isMounted()) return;
+          setter(data);
+          console.log(`${label} loaded`, data);
           return;
         }
-
-        if (!isMounted) return;
-
-        console.warn(
-          `Tentative ${attempt} échouée. Nouvelle tentative dans ${
-            retryInterval / 1000
-          } secondes...`,
-        );
-
-        await delay(retryInterval);
+        console.warn(`Attempt ${attempt} failed for ${label}. Retrying...`);
+      } catch (error) {
+        console.error(`Error while loading ${label}:`, error);
       }
-
-      if (isMounted) {
-        console.error(
-          'Impossible de charger les paramètres après 10 tentatives.',
-        );
-      }
-    };
-
-    fetchGeneralSettingsWithRetry();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+      await delay(interval);
+    }
+    console.error(`Failed to load ${label} after ${maxRetries} attempts.`);
+  };
 
   useEffect(() => {
-    let isMounted = true;
+    let mounted = true;
 
-    const fetchModelParametersWithRetry = async () => {
-      const delay = (ms: number) =>
-        new Promise((resolve) => setTimeout(resolve, ms));
-      const retryInterval = 3000;
-      const maxRetries = 10;
-
-      for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        const parameters = await loadModelParameters();
-        if (parameters && isMounted) {
-          setPredictionParameters(parameters);
-          console.log('parameters loaded', parameters);
-          return;
-        }
-
-        if (!isMounted) return;
-
-        console.warn(
-          `Tentative ${attempt} échouée. Nouvelle tentative dans ${
-            retryInterval / 1000
-          } secondes...`,
-        );
-
-        await delay(retryInterval);
-      }
-
-      if (isMounted) {
-        console.error(
-          'Impossible de charger les paramètres du modèle après 10 tentatives.',
-        );
-      }
-    };
-
-    fetchModelParametersWithRetry();
+    fetchWithRetry(
+      loadGeneralSettings,
+      setGeneralSettings,
+      'generalSettings',
+      () => mounted,
+    );
+    fetchWithRetry(
+      loadModelParameters,
+      setPredictionParameters,
+      'modelParameters',
+      () => mounted,
+    );
 
     return () => {
-      isMounted = false;
+      mounted = false;
     };
   }, []);
 
