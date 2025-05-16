@@ -189,7 +189,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     return true;
   };
 
-  const closeTab = async (tabId: number) => {
+  const closeTab = async (tabId: number, skipWarning = false) => {
     const tabIndex = tabs.current.findIndex((t) => t.id === tabId);
     if (tabIndex === -1) return;
 
@@ -201,35 +201,37 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
-    const tab = tabs.current[tabIndex];
-    let confirmState: 'none' | 'waiting' | 'notBlank' = 'none';
+    if (!skipWarning) {
+      const tab = tabs.current[tabIndex];
+      let confirmState: 'none' | 'waiting' | 'notBlank' = 'none';
 
-    if (tab.status === 'waiting') {
-      confirmState = 'waiting';
-    } else if (
-      tab.smiles ||
-      tab.spectrum.length !== 0 ||
-      (tabId === activeTab.current &&
-        (await window.ketcher.getSmiles()).trim() !== '')
-    ) {
-      confirmState = 'notBlank';
-    }
+      if (tab.status === 'waiting') {
+        confirmState = 'waiting';
+      } else if (
+        tab.smiles ||
+        tab.spectrum.length !== 0 ||
+        (tabId === activeTab.current &&
+          (await window.ketcher.getSmiles()).trim() !== '')
+      ) {
+        confirmState = 'notBlank';
+      }
 
-    if (confirmState !== 'none') {
-      const confirmMessage =
-        confirmState === 'waiting'
-          ? `Tab ${tabId} is currently awaiting a prediction result. Closing it now means you won't receive the result.`
-          : `Tab ${tabId} contains unsaved molecular or spectrum data.`;
+      if (confirmState !== 'none') {
+        const confirmMessage =
+          confirmState === 'waiting'
+            ? `Tab ${tabId} is currently awaiting a prediction result. Closing it now means you won't receive the result.`
+            : `Tab ${tabId} contains molecular or spectrum data.`;
 
-      const confirmed = openConfirm.current
-        ? await openConfirm.current(
-            'Confirmation',
-            `${confirmMessage}\n\nAre you sure you want to continue?`,
-          )
-        : true;
+        const confirmed = openConfirm.current
+          ? await openConfirm.current(
+              'Confirmation',
+              `${confirmMessage}\n\nAre you sure you want to continue?`,
+            )
+          : true;
 
-      if (!confirmed) {
-        return;
+        if (!confirmed) {
+          return;
+        }
       }
     }
 

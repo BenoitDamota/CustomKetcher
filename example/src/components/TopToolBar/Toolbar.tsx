@@ -23,6 +23,7 @@ const Toolbar: React.FC = () => {
     predictionParameters,
     newTab,
     updateTab,
+    closeTab,
     clearActiveTab,
   } = useAppContext();
 
@@ -94,6 +95,7 @@ const Toolbar: React.FC = () => {
       startPrediction(
         newTab,
         updateTab,
+        closeTab,
         predictionParameters,
         setSnackbarMessages,
         inputSmilesBar,
@@ -102,6 +104,7 @@ const Toolbar: React.FC = () => {
       startPrediction(
         newTab,
         updateTab,
+        closeTab,
         predictionParameters,
         setSnackbarMessages,
       );

@@ -1,6 +1,5 @@
 export class Mutex {
   private _locking: Promise<void> = Promise.resolve();
-  private _unlock!: () => void;
 
   async lock(): Promise<() => void> {
     let unlockNext!: () => void;

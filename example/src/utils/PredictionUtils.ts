@@ -11,6 +11,7 @@ const PREDICTION_MODEL_TIMEOUT = 300000;
 export const startPrediction = async (
   newTab: (data: Omit<TabDataType, 'id'>) => Promise<number>,
   updateTab: (id: number, data: Omit<TabDataType, 'id'>) => Promise<boolean>,
+  closeTab: (tabId: number, skipWarning?: boolean) => void,
   modelsParameters: ModelParameters,
   setSnackbarMessages: React.Dispatch<React.SetStateAction<SnackbarMessage>>,
   smilesArg?: string,
@@ -95,11 +96,7 @@ export const startPrediction = async (
     return predictionData;
   } catch (error: unknown) {
     if (newTabId !== null) {
-      await updateTab(newTabId, {
-        status: 'ready',
-        smiles: '',
-        spectrum: [],
-      });
+      await closeTab(newTabId, true);
     }
 
     if (error instanceof AxiosError) {
