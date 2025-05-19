@@ -12,11 +12,13 @@ declare namespace Plotly {
         _offset: number;
         _length: number;
         p2c: (px: number) => number;
+        range: number[];
       };
       yaxis: {
         _offset: number;
         _length: number;
         p2c: (px: number) => number;
+        range: number[];
       };
     };
   }

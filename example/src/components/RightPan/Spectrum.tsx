@@ -3,10 +3,15 @@ import ReactDOM from 'react-dom';
 import Plot from 'react-plotly.js';
 import MinimizeButton from './MinimizeRightPanButton';
 import { useAppContext } from '../../context/AppContext';
-import { SpectrumDataPoint } from '../../types/SpectrumDataType';
+import {
+  RegionData,
+  SpectrumDataPoint,
+  SpectrumRegion,
+} from '../../types/SpectrumDataType';
 import AutoZoomOnRegionButton from './AutomZoomOnRegionButton';
 import { FormControl, MenuItem, Select } from '@mui/material';
 import './Spectrum.module.css';
+import { getSpectrumRegions } from '../../utils/spectrumUtils';
 
 const customButtonsDivStyle: React.CSSProperties = {
   display: 'flex',
@@ -28,11 +33,13 @@ interface PlotlyHTMLElementWithFullLayout extends Plotly.PlotlyHTMLElement {
       _offset: number;
       _length: number;
       p2c: (px: number) => number;
+      range: number[];
     };
     yaxis: {
       _offset: number;
       _length: number;
       p2c: (px: number) => number;
+      range: number[];
     };
   };
 }
@@ -44,15 +51,6 @@ interface RelayoutEvent {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 }
-
-export type SpectrumRegion = {
-  regionId: string;
-  atomIds: number[];
-  ppmMin: number;
-  ppmMax: number;
-  intensityMax: number;
-  highestPpm: number;
-};
 
 interface Props {
   minimizeRightPan: () => void;
@@ -69,7 +67,14 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
   } = useAppContext();
 
   const [modebarContainerIsReady, setIsModebarContainerReady] = useState(false);
+
+  const regionsCacheRef = useRef<Map<number, RegionData>>(new Map());
+
   const [regions, setRegions] = useState<SpectrumRegion[]>([]);
+  const [regionLookup, setRegionLookup] = useState<
+    { start: number; end: number; regionId: string }[]
+  >([]);
+
   const [autoZoomOnRegion, setAutoZoomOnRegion] = useState<boolean>(false);
   const [showPeaksLabels, setShowPeaksLabels] = useState<
     'none' | 'atomsIds' | 'ppm'
@@ -82,7 +87,7 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
       ?.spectrum || []) as SpectrumDataPoint[];
     // Use the renderVersion to detect the rerender between tabs
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, tabs, renderVersion]);
+  }, [renderVersion]);
 
   const [layout, _] = useState({
     autosize: true,
@@ -98,38 +103,73 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
     showlegend: false,
   });
 
+  // Build region lookup for mousemove highlight
+  const buildRegionLookup = useCallback((regions: SpectrumRegion[]) => {
+    if (regions.length === 0) return [];
+    const sorted = [...regions].sort(
+      (a, b) => (a.ppmMin + a.ppmMax) / 2 - (b.ppmMin + b.ppmMax) / 2,
+    );
+    return sorted.map((r, idx) => {
+      const center = (r.ppmMin + r.ppmMax) / 2;
+      const prevCenter =
+        idx > 0
+          ? (sorted[idx - 1].ppmMin + sorted[idx - 1].ppmMax) / 2
+          : -Infinity;
+      const nextCenter =
+        idx < sorted.length - 1
+          ? (sorted[idx + 1].ppmMin + sorted[idx + 1].ppmMax) / 2
+          : Infinity;
+      return {
+        start: idx === 0 ? -Infinity : (center + prevCenter) / 2,
+        end: idx === sorted.length - 1 ? Infinity : (center + nextCenter) / 2,
+        regionId: r.regionId,
+      };
+    });
+  }, []);
+
   useEffect(() => {
-    const grouped = new Map<string, SpectrumDataPoint[]>();
+    const tabId = activeTab.current;
+    const spectrumDataForTab =
+      tabs.current.find((tab) => tab.id === tabId)?.spectrum || [];
 
-    spectrumData.forEach((point: SpectrumDataPoint) => {
-      const key = point.atomID?.sort((a, b) => a - b).join(',') || '';
-      if (!key) return;
-      if (!grouped.has(key)) grouped.set(key, []);
-      grouped.get(key)?.push(point);
-    });
+    if (spectrumDataForTab.length === 0) {
+      setRegions([]);
+      setRegionLookup([]);
+      return;
+    }
 
-    const regionList: SpectrumRegion[] = [];
-    grouped.forEach((group: SpectrumDataPoint[], index: string) => {
-      const ppms = group.map((p) => p.ppm);
-      const intensities = group.map((p) => p.intensity);
+    const cached = regionsCacheRef.current.get(tabId);
 
-      // Find the ppm associted with the maximal intenisty of this peaks
-      const maxIntensity = Math.max(...intensities);
-      const indexOfMax = intensities.findIndex((i) => i === maxIntensity);
-      const highestPpm = ppms[indexOfMax];
+    if (cached) {
+      setRegions(cached.region);
+      setRegionLookup(cached.lookup);
+    } else {
+      const fetchAndCache = async () => {
+        const fetchedRegions = await getSpectrumRegions(
+          spectrumDataForTab,
+          setSnackbarMessages,
+        );
 
-      regionList.push({
-        regionId: index,
-        atomIds: group[0].atomID,
-        ppmMin: Math.min(...ppms),
-        ppmMax: Math.max(...ppms),
-        intensityMax: maxIntensity,
-        highestPpm,
-      });
-    });
+        if (!fetchedRegions) {
+          setRegions([]);
+          setRegionLookup([]);
+          return;
+        }
 
-    setRegions(regionList);
-  }, [spectrumData]);
+        const lookup = buildRegionLookup(fetchedRegions);
+
+        regionsCacheRef.current.set(tabId, {
+          region: fetchedRegions,
+          lookup,
+        });
+
+        setRegions(fetchedRegions);
+        setRegionLookup(lookup);
+      };
+
+      fetchAndCache();
+    }
+  }, [activeTab, tabs, renderVersion, buildRegionLookup, setSnackbarMessages]);
 
   // Observer that detect when the modebar-container is ready for modification
   useEffect(() => {
@@ -231,6 +271,28 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
           if (autoZoomOnRegion) {
             const margin = 0.025;
 
+            const region = closestRegion;
+
+            let textHeightPx = 14;
+            if (showPeaksLabels === 'ppm' && region?.multiplicity?.length) {
+              const lines = region.multiplicity.length;
+              textHeightPx = lines * 14;
+            } else if (
+              showPeaksLabels === 'atomsIds' &&
+              region?.atomIds?.length
+            ) {
+              const lines = region.atomIds.length;
+              textHeightPx = lines * 14;
+            }
+
+            const fullLayout = plotlyRef.current._fullLayout;
+            const yaxis = fullLayout.yaxis;
+            const plotHeightPx = yaxis._length;
+            const yRange = yaxis.range;
+            const yRangeSpan = yRange[1] - yRange[0];
+
+            const yPadding = (textHeightPx / plotHeightPx) * yRangeSpan;
+
             Plotly.relayout(plotlyRef.current, {
               xaxis: {
                 range: [
@@ -242,7 +304,8 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
                 range: [
                   0,
                   closestRegion.intensityMax +
-                    closestRegion.intensityMax * 0.05,
+                    closestRegion.intensityMax * 0.05 +
+                    yPadding,
                 ],
               },
             });
@@ -258,39 +321,14 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
     return () => {
       plotDiv.removeEventListener('click', handleClick);
     };
-  }, [autoZoomOnRegion, openAlert, plotlyRef, regions, setSnackbarMessages]);
-
-  // Build region lookup for mousemove highlight
-  const buildRegionLookup = useCallback((regions: SpectrumRegion[]) => {
-    if (regions.length === 0) return [];
-    const sorted = [...regions].sort(
-      (a, b) => (a.ppmMin + a.ppmMax) / 2 - (b.ppmMin + b.ppmMax) / 2,
-    );
-    return sorted.map((r, idx) => {
-      const center = (r.ppmMin + r.ppmMax) / 2;
-      const prevCenter =
-        idx > 0
-          ? (sorted[idx - 1].ppmMin + sorted[idx - 1].ppmMax) / 2
-          : -Infinity;
-      const nextCenter =
-        idx < sorted.length - 1
-          ? (sorted[idx + 1].ppmMin + sorted[idx + 1].ppmMax) / 2
-          : Infinity;
-      return {
-        start: idx === 0 ? -Infinity : (center + prevCenter) / 2,
-        end: idx === sorted.length - 1 ? Infinity : (center + nextCenter) / 2,
-        regionId: r.regionId,
-      };
-    });
-  }, []);
-
-  const [regionLookup, setRegionLookup] = useState<
-    { start: number; end: number; regionId: string }[]
-  >([]);
-
-  useEffect(() => {
-    setRegionLookup(buildRegionLookup(regions));
-  }, [buildRegionLookup, regions]);
+  }, [
+    autoZoomOnRegion,
+    openAlert,
+    plotlyRef,
+    regions,
+    setSnackbarMessages,
+    showPeaksLabels,
+  ]);
 
   useEffect(() => {
     const plotEl = containerRef.current?.querySelector(
@@ -396,52 +434,71 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
     return `${intPart}.${truncatedDec}`;
   }, []);
 
+  const plotData = useMemo(
+    () => [
+      {
+        x: spectrumData.map((d: SpectrumDataPoint) => d.ppm),
+        y: spectrumData.map((d: SpectrumDataPoint) => d.intensity),
+        type: 'scatter',
+        mode: 'lines',
+        line: { color: '#167782' },
+        name: 'NMR Spectrum',
+      },
+    ],
+    [spectrumData],
+  );
+
+  const plotAnnotations = useMemo(() => {
+    if (showPeaksLabels === 'atomsIds') {
+      return regions.map((region) => {
+        const atomIds = region.atomIds || [];
+        const text = atomIds.map((id) => id.toLocaleString()).join('<br />');
+
+        const lines = atomIds.length;
+        const textHeight = lines * 14;
+
+        return {
+          x: (region.ppmMin + region.ppmMax) / 2,
+          y: region.intensityMax,
+          yshift: textHeight,
+          text,
+          showarrow: false,
+          font: { size: 14, color: '#000000' },
+          align: 'center',
+        };
+      });
+    } else if (showPeaksLabels === 'ppm') {
+      return regions.map((region) => {
+        const multiplicity = region.multiplicity || [];
+        const text = multiplicity
+          .map((m) => truncateDecimalsStr(m.ppm, 3))
+          .join('<br />');
+
+        const lines = multiplicity.length;
+        const textHeight = lines * 14;
+
+        return {
+          x: (region.ppmMin + region.ppmMax) / 2,
+          y: region.intensityMax,
+          yshift: textHeight,
+          text,
+          showarrow: false,
+          font: { size: 13, color: '#000000' },
+          align: 'center',
+        };
+      });
+    } else {
+      return [];
+    }
+  }, [showPeaksLabels, regions, truncateDecimalsStr]);
+
   return (
     <div ref={containerRef} style={fullWidthAndHeightStyle}>
       <Plot
-        data={[
-          {
-            x: spectrumData.map((d: SpectrumDataPoint) => d.ppm),
-            y: spectrumData.map((d: SpectrumDataPoint) => d.intensity),
-            type: 'scatter',
-            mode: 'lines',
-            line: { color: '#167782' },
-            name: 'NMR Spectrum',
-          },
-        ]}
+        data={plotData}
         layout={{
           ...layout,
-          annotations:
-            showPeaksLabels === 'atomsIds'
-              ? regions.map((region) => {
-                  const text = region.atomIds
-                    .map((id) => id.toLocaleString())
-                    .join('<br />');
-
-                  const lines = region.atomIds.length;
-                  const textHeight = lines * 14;
-
-                  return {
-                    x: (region.ppmMin + region.ppmMax) / 2,
-                    y: region.intensityMax,
-                    yshift: textHeight,
-                    text,
-                    showarrow: false,
-                    font: { size: 14, color: '#000000' },
-                    align: 'center',
-                  };
-                })
-              : showPeaksLabels === 'ppm'
-              ? regions.map((region) => ({
-                  x: (region.ppmMin + region.ppmMax) / 2,
-                  y: region.intensityMax,
-                  yshift: 14,
-                  text: `${truncateDecimalsStr(region.highestPpm, 3)}`,
-                  showarrow: false,
-                  font: { size: 14, color: '#000000' },
-                  align: 'center',
-                }))
-              : [],
+          annotations: plotAnnotations,
         }}
         config={{
           displayModeBar: true,
