@@ -82,7 +82,7 @@ export async function loadProjectFile(
 
       console.log(response);
 
-      const spectrum = response.data as SpectrumDataPoint[];
+      const spectrum = response.data.spectrum as SpectrumDataPoint[];
 
       result.success = 'JCAMP file successfully loaded!';
       result.data = {
