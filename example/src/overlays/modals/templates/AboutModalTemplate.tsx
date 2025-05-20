@@ -25,7 +25,8 @@ const AboutModalTemplate: React.FC<Props> = () => {
           KreeZeG123/PredictionRMN
         </a>
         <br />
-        <strong>Technologies:</strong> React, Python, Ketcher, RDKit, Plotly
+        <strong>Technologies:</strong> React, Ketcher, Plotly, Python, Flask,
+        RDKit, SciPy, Jcamp, Waitress
         <br />
         <br />
         <strong>Description:</strong> PredictionRMN is an application for
