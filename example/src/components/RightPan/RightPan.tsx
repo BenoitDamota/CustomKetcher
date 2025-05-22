@@ -15,13 +15,6 @@ const iconStyleCenter: React.CSSProperties = {
   transform: 'translate(-50%, -50%)',
 };
 
-const spectrumDivStyle: React.CSSProperties = {
-  width: '100%',
-  height: '100%',
-  display: 'flex',
-  flexDirection: 'column',
-};
-
 interface Props {
   isRightPanReduced: boolean;
   minimizeRightPan: () => void;
@@ -44,6 +37,13 @@ const RightPan: React.FC<Props> = ({
     color: 'white',
     position: 'relative',
     cursor: 'pointer',
+  };
+
+  const spectrumDivStyle: React.CSSProperties = {
+    width: '100%',
+    height: '100%',
+    display: isRightPanReduced ? 'none' : 'flex',
+    flexDirection: 'column',
   };
 
   return (
