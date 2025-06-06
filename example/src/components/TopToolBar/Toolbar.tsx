@@ -9,7 +9,7 @@ import {
   IconButton,
   Stack,
 } from '@mui/material';
-import { startPrediction } from '../../utils/PredictionUtils';
+import { startPredictionAuto } from '../../utils/PredictionUtils';
 import { saveGeneralSettings } from '../../utils/SettingsUtils';
 import DontShowAgainPartial from '../../overlays/dialogs/partials/DontShowAgainPartial';
 import { loadProjectFile, openFileInput } from '../../utils/fileUtils';
@@ -67,6 +67,12 @@ const Toolbar: React.FC = () => {
   }
 
   async function handlePrediction() {
+    const predict1HAnd13COnPredict = generalSettings
+      .find((category) => category.settingsCategoryName === 'General')
+      ?.settings.find((setting) => setting.key === 'predict1HAnd13COnPredict');
+
+    console.log(predict1HAnd13COnPredict);
+
     if (inputSmilesBar) {
       const confirmOnInputSMILES = generalSettings
         .find((category) => category.settingsCategoryName === 'General')
@@ -92,21 +98,27 @@ const Toolbar: React.FC = () => {
         if (!confirmed) return;
       }
 
-      startPrediction(
+      startPredictionAuto(
         newTab,
         updateTab,
         closeTab,
         predictionParameters,
         setSnackbarMessages,
+        predict1HAnd13COnPredict
+          ? (predict1HAnd13COnPredict.value as boolean)
+          : true,
         inputSmilesBar,
       );
     } else {
-      startPrediction(
+      startPredictionAuto(
         newTab,
         updateTab,
         closeTab,
         predictionParameters,
         setSnackbarMessages,
+        predict1HAnd13COnPredict
+          ? (predict1HAnd13COnPredict.value as boolean)
+          : true,
       );
     }
   }

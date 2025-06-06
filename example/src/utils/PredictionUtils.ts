@@ -1,5 +1,8 @@
 import axios, { AxiosError } from 'axios';
-import { ModelParameters } from '../types/ModelParametersType';
+import {
+  ModelParameters,
+  ModelParameterType,
+} from '../types/ModelParametersType';
 import { PredictionDataType } from '../types/PredictionDataType';
 import { SnackbarMessage } from '../types/SnackbarMessage';
 import { TabDataType } from '../types/TabDataType';
@@ -15,6 +18,7 @@ export const startPrediction = async (
   modelsParameters: ModelParameters,
   setSnackbarMessages: React.Dispatch<React.SetStateAction<SnackbarMessage>>,
   smilesArg?: string,
+  type?: '1H' | '13C' | undefined,
 ): Promise<PredictionDataType | null> => {
   let newTabId: number | null = null;
 
@@ -65,18 +69,52 @@ export const startPrediction = async (
       spectrum: [],
     });
 
+    // Handle when NMR Type is specified
+    const updatedParameters: ModelParameterType[] = [
+      ...modelParameters.parameters.map((param) => {
+        if (param.key === 'type' && type !== undefined) {
+          return {
+            ...param,
+            value: type,
+          };
+        }
+        return { ...param };
+      }),
+    ];
+    const typeExists = modelParameters.parameters.some(
+      (param) => param.key === 'type',
+    );
+    if (!typeExists && type !== undefined) {
+      const newParamType: ModelParameterType = {
+        key: 'type',
+        label: 'NMR Type',
+        required: true,
+        type: 'text',
+        value: type,
+      };
+      updatedParameters.push(newParamType);
+    }
+
     // Molecule SMILES is kekulized in the backend via RDKIT
     const response = await axios.post(
       `${apiUrl}/api/predict`,
       {
         smiles,
         endpoint: modelParameters.endpoint,
-        ...modelParameters.parameters,
+        ...updatedParameters,
       },
       {
         timeout: PREDICTION_MODEL_TIMEOUT,
       },
     );
+
+    if (
+      response.data &&
+      typeof response.data === 'object' &&
+      'error' in response.data
+    ) {
+      throw new Error(response.data.error);
+    }
 
     const predictionData: PredictionDataType = response.data;
 
@@ -112,10 +150,56 @@ export const startPrediction = async (
     } else {
       console.error('Unknown error during the prediction:', error);
     }
+
+    let message = 'Unknown error during the prediction.';
+    if (error instanceof Error) {
+      message = error.message;
+    }
+
     setSnackbarMessages({
       severity: 'error',
-      message: 'Error during the prediction',
+      message: `Error during the prediction : ${message}`,
     });
     return null;
   }
 };
+
+export async function startPredictionAuto(
+  newTab: (data: Omit<TabDataType, 'id'>) => Promise<number>,
+  updateTab: (id: number, data: Omit<TabDataType, 'id'>) => Promise<boolean>,
+  closeTab: (tabId: number, skipWarning?: boolean) => void,
+  modelsParameters: ModelParameters,
+  setSnackbarMessages: React.Dispatch<React.SetStateAction<SnackbarMessage>>,
+  predictBoth: boolean,
+  smilesArg?: string,
+) {
+  if (predictBoth) {
+    startPrediction(
+      newTab,
+      updateTab,
+      closeTab,
+      modelsParameters,
+      setSnackbarMessages,
+      smilesArg,
+      '1H',
+    );
+    startPrediction(
+      newTab,
+      updateTab,
+      closeTab,
+      modelsParameters,
+      setSnackbarMessages,
+      smilesArg,
+      '13C',
+    );
+  } else {
+    await startPrediction(
+      newTab,
+      updateTab,
+      closeTab,
+      modelsParameters,
+      setSnackbarMessages,
+      smilesArg,
+    );
+  }
+}
