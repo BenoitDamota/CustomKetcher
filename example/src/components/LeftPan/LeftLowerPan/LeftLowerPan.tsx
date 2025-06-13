@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import MinimizeButton from './MinimizeLeftLowerPanButton';
+import MinimizeButton from '../../Buttons/MinimizeButton/MinimizeButton';
 import PeaksInfosTable from './PeaksInfosTable';
 import {
   MIN_HEIGHT_LEFT_LOWER_PAN,
@@ -140,7 +140,7 @@ const LeftLowerPan: React.FC<Props> = ({
           >
             description
           </button>
-          <MinimizeButton minimizeLeftLowerPan={minimizeLeftLowerPan} />
+          <MinimizeButton minimize={minimizeLeftLowerPan} />
         </div>
       </div>
 

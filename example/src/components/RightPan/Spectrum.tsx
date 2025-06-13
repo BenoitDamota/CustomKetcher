@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
 import Plot from 'react-plotly.js';
-import MinimizeButton from './MinimizeRightPanButton';
+import MinimizeButton from '../Buttons/MinimizeButton/MinimizeButton';
 import { useAppContext } from '../../context/AppContext';
 import {
   RegionData,
@@ -679,7 +679,7 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
               autoZoomOnRegion={autoZoomOnRegion}
               setAutoZoomOnRegion={setAutoZoomOnRegion}
             />
-            <MinimizeButton minimizeRightPan={minimizeRightPan} />
+            <MinimizeButton minimize={minimizeRightPan} />
           </div>,
           document.querySelector('.modebar-container') as Element,
         )}

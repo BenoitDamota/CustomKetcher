@@ -1,13 +1,13 @@
 import styles from './MinimizeButton.module.css';
 
 interface Props {
-  minimizeRightPan: () => void;
+  minimize: () => void;
 }
 
-const MinimizeButton: React.FC<Props> = ({ minimizeRightPan }) => {
+const MinimizeButton: React.FC<Props> = ({ minimize }) => {
   return (
     <>
-      <button className={styles.minimize_btn} onClick={minimizeRightPan}>
+      <button className={styles.minimize_btn} onClick={minimize}>
         <svg
           width="24"
           height="24"
