@@ -3,7 +3,7 @@ import Spectrum from './Spectrum';
 
 const iconStyleTop: React.CSSProperties = {
   position: 'absolute',
-  top: 0,
+  top: '6px',
   left: '50%',
   transform: 'translateX(-50%)',
 };
@@ -18,7 +18,7 @@ const iconStyleCenter: React.CSSProperties = {
 interface Props {
   isRightPanReduced: boolean;
   minimizeRightPan: () => void;
-  expandPanel: (target: 'LEFT' | 'RIGHT') => void;
+  expandPanel: (target: 'LEFT' | 'RIGHT' | 'LEFT_UPPER' | 'LEFT_LOWER') => void;
 }
 
 const RightPan: React.FC<Props> = ({
@@ -49,7 +49,11 @@ const RightPan: React.FC<Props> = ({
   return (
     <div style={{ height: '100%' }}>
       {isRightPanReduced && (
-        <button style={minimizedBarStyle} onClick={handleExpandRight}>
+        <button
+          className="hover-brightness-115 hover-primary"
+          style={minimizedBarStyle}
+          onClick={handleExpandRight}
+        >
           <span className="material-symbols-outlined" style={iconStyleTop}>
             search_insights
           </span>

@@ -6,6 +6,7 @@ import {
 import { PredictionDataType } from '../types/PredictionDataType';
 import { SnackbarMessage } from '../types/SnackbarMessage';
 import { TabDataType } from '../types/TabDataType';
+import { NMRType } from '../types/metadataNRM';
 
 const apiUrl = process.env.REACT_APP_INTERN_API_PATH || '';
 
@@ -63,28 +64,35 @@ export const startPrediction = async (
       return null;
     }
 
-    newTabId = await newTab({
-      status: 'waiting',
-      smiles,
-      spectrum: [],
-    });
+    let nmrType: NMRType = 'Unknown';
 
-    // Handle when NMR Type is specified
-    const updatedParameters: ModelParameterType[] = [
-      ...modelParameters.parameters.map((param) => {
-        if (param.key === 'type' && type !== undefined) {
-          return {
-            ...param,
-            value: type,
-          };
+    const updatedParameters: ModelParameterType[] =
+      modelParameters.parameters.map((param) => {
+        if (param.key === 'type') {
+          if (type !== undefined) {
+            nmrType = type === '1H' || type === '13C' ? type : 'Unknown';
+            return {
+              ...param,
+              value: type,
+            };
+          } else {
+            if (param.value === '1H' || param.value === '13C') {
+              nmrType = param.value as NMRType;
+            } else {
+              nmrType = 'Unknown';
+            }
+            return { ...param };
+          }
         }
         return { ...param };
-      }),
-    ];
+      });
+
     const typeExists = modelParameters.parameters.some(
       (param) => param.key === 'type',
     );
+
     if (!typeExists && type !== undefined) {
+      nmrType = type === '1H' || type === '13C' ? type : 'Unknown';
       const newParamType: ModelParameterType = {
         key: 'type',
         label: 'NMR Type',
@@ -94,6 +102,16 @@ export const startPrediction = async (
       };
       updatedParameters.push(newParamType);
     }
+
+    newTabId = await newTab({
+      status: 'waiting',
+      smiles,
+      spectrum: [],
+      peaksInfos: [],
+      metadata: {
+        nucleusType: nmrType,
+      },
+    });
 
     // Molecule SMILES is kekulized in the backend via RDKIT
     const response = await axios.post(
@@ -122,6 +140,8 @@ export const startPrediction = async (
       status: 'ready',
       smiles: predictionData.smiles,
       spectrum: predictionData.spectrum,
+      peaksInfos: predictionData.peaksInfos,
+      metadata: predictionData.metadata,
     });
 
     if (result) {

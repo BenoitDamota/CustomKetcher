@@ -103,6 +103,10 @@ nav .material-symbols-outlined:hover {
   color: #333 !important;
 }
 
+.hover-brightness-115:hover {
+  filter: brightness(115%) !important;
+}
+
 .hover-brightness-130:hover {
   filter: brightness(130%) !important;
 }
@@ -124,4 +128,9 @@ nav .material-symbols-outlined:hover {
 
 div[data-testid$="-dialog"] {
   position: fixed;
+}
+
+circle[fill="#57ff8f"], rect[fill="#57ff8f"], path[fill="#57ff8f"] {
+  fill: #FFFF7F;
+  stroke: #FFFF7F;
 }

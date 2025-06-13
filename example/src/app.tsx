@@ -33,6 +33,7 @@ function App() {
               height: '100%',
               width: '100%',
               backgroundColor: '#FCFCFC',
+              position: 'relative',
             }}
           >
             <Toolbar />

@@ -63,6 +63,8 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
     setSnackbarMessages,
     tabs,
     activeTab,
+    registerSpectrumInterface,
+    peaksInfosTableInterface,
     renderVersion,
   } = useAppContext();
 
@@ -103,6 +105,8 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
     showlegend: false,
   });
 
+  const selectedRegionsRef = useRef<SpectrumRegion[]>([]);
+
   // Build region lookup for mousemove highlight
   const buildRegionLookup = useCallback((regions: SpectrumRegion[]) => {
     if (regions.length === 0) return [];
@@ -126,6 +130,59 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
       };
     });
   }, []);
+
+  useEffect(() => {
+    registerSpectrumInterface({
+      selectAtoms: (atomIds: number[]) => {
+        if (!plotlyRef.current) return;
+
+        const matchingRegions = regions.filter((region) =>
+          region.atomIds.some((atomId) => atomIds.includes(atomId)),
+        );
+
+        selectedRegionsRef.current = matchingRegions;
+
+        if (matchingRegions.length === 0) {
+          Plotly.relayout(plotlyRef.current, { shapes: [] });
+          return;
+        }
+
+        const ppmMin = Math.min(...matchingRegions.map((r) => r.ppmMin));
+        const ppmMax = Math.max(...matchingRegions.map((r) => r.ppmMax));
+        const intensityMax = Math.max(
+          ...matchingRegions.map((r) => r.intensityMax),
+        );
+
+        const shapes = matchingRegions.map((region) => ({
+          type: 'rect',
+          xref: 'x',
+          yref: 'paper',
+          x0: region.ppmMin,
+          x1: region.ppmMax,
+          y0: 0,
+          y1: 1,
+          line: { color: '#FFFF7F', width: 4 },
+          fillcolor: '#FFFF7F',
+          layer: 'below',
+        }));
+
+        Plotly.relayout(plotlyRef.current, { shapes });
+
+        if (autoZoomOnRegion) {
+          Plotly.relayout(plotlyRef.current, {
+            'xaxis.range': [ppmMax + 0.025, ppmMin - 0.025],
+            'yaxis.range': [0, intensityMax * 1.1],
+          });
+        }
+      },
+    });
+  }, [
+    regions,
+    plotlyRef,
+    autoZoomOnRegion,
+    registerSpectrumInterface,
+    renderVersion,
+  ]);
 
   useEffect(() => {
     const tabId = activeTab.current;
@@ -240,6 +297,25 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
         }
 
         if (closestRegion) {
+          selectedRegionsRef.current = [closestRegion];
+
+          const selectionShapes = [
+            {
+              type: 'rect',
+              xref: 'x',
+              yref: 'paper',
+              x0: closestRegion.ppmMin,
+              x1: closestRegion.ppmMax,
+              y0: 0,
+              y1: 1,
+              line: { color: '#FFFF7F', width: 4 },
+              fillcolor: '#FFFF7F',
+              layer: 'below',
+            },
+          ];
+
+          Plotly.relayout(plotlyRef.current, { shapes: selectionShapes });
+
           const ketcher = window.ketcher;
 
           if (!ketcher) {
@@ -249,6 +325,7 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
                 'Ketcher is not available, the associated atoms will not be shown in the editor',
             });
           } else {
+            peaksInfosTableInterface?.selectAtoms(closestRegion.atomIds);
             ketcher
               .layout()
               .then(() => {
@@ -324,6 +401,7 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
   }, [
     autoZoomOnRegion,
     openAlert,
+    peaksInfosTableInterface,
     plotlyRef,
     regions,
     setSnackbarMessages,
@@ -371,21 +449,39 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
         );
 
         if (closestRegion) {
+          const selectionShapes = selectedRegionsRef.current.map((region) => ({
+            type: 'rect',
+            xref: 'x',
+            yref: 'paper',
+            x0: region.ppmMin,
+            x1: region.ppmMax,
+            y0: 0,
+            y1: 1,
+            line: { color: '#FFFF7F', width: 4 },
+            fillcolor: '#FFFF7F',
+            layer: 'below',
+          }));
+
+          const hoverShape = {
+            type: 'rect',
+            xref: 'x',
+            yref: 'paper',
+            x0: closestRegion.ppmMin,
+            x1: closestRegion.ppmMax,
+            y0: 0,
+            y1: 1,
+            line: { color: '#57ff8f' },
+            fillcolor: selectedRegionsRef.current.some(
+              (r) => r.regionId === closestRegion.regionId,
+            )
+              ? 'transparent'
+              : '#57ff8f',
+
+            layer: 'below',
+          };
+
           Plotly.relayout(plotlyRef.current, {
-            shapes: [
-              {
-                type: 'rect',
-                xref: 'x',
-                yref: 'paper',
-                x0: closestRegion.ppmMin,
-                x1: closestRegion.ppmMax,
-                y0: 0,
-                y1: 1,
-                line: { color: '#FFFF7F', width: 4 },
-                fillcolor: '#FFFF7F',
-                layer: 'below',
-              },
-            ],
+            shapes: [...selectionShapes, hoverShape],
           });
         }
       }
@@ -396,9 +492,26 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
     const handleMouseLeave = () => {
       if (!plotlyRef.current) return;
 
-      Plotly.relayout(plotlyRef.current, {
-        shapes: [],
-      });
+      if (selectedRegionsRef.current.length === 0) {
+        Plotly.relayout(plotlyRef.current, {
+          shapes: [],
+        });
+      } else {
+        const shapes = selectedRegionsRef.current.map((region) => ({
+          type: 'rect',
+          xref: 'x',
+          yref: 'paper',
+          x0: region.ppmMin,
+          x1: region.ppmMax,
+          y0: 0,
+          y1: 1,
+          line: { color: '#FFFF7F', width: 4 },
+          fillcolor: '#FFFF7F',
+          layer: 'below',
+        }));
+
+        Plotly.relayout(plotlyRef.current, { shapes });
+      }
     };
 
     plotEl.addEventListener('mouseleave', handleMouseLeave);
@@ -491,6 +604,37 @@ const Spectrum: React.FC<Props> = ({ minimizeRightPan }) => {
       return [];
     }
   }, [showPeaksLabels, regions, truncateDecimalsStr]);
+
+  // Use effect pour detecter les resizes et remettre la shape de la zone sélectionné
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !plotlyRef.current) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      const selectedShapes = selectedRegionsRef.current.map((region) => ({
+        type: 'rect',
+        xref: 'x',
+        yref: 'paper',
+        x0: region.ppmMin,
+        x1: region.ppmMax,
+        y0: 0,
+        y1: 1,
+        line: { color: '#FFFF7F', width: 4 },
+        fillcolor: '#FFFF7F',
+        layer: 'below',
+      }));
+
+      Plotly.relayout(plotlyRef.current, {
+        shapes: selectedShapes,
+      });
+    });
+
+    resizeObserver.observe(container);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [plotlyRef]);
 
   return (
     <div ref={containerRef} style={fullWidthAndHeightStyle}>

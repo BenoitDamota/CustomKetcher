@@ -50,7 +50,12 @@ const Toolbar: React.FC = () => {
 
         newTab({
           smiles: data.molecules.format === 'SMILES' ? data.molecules.data : '',
-          spectrum: data.spectrum,
+          spectrum: data.spectrum || [],
+          peaksInfos: data.peaksInfos || [],
+          metadata: {
+            ...data.metadata,
+            nucleusType: data.metadata?.nucleusType ?? 'Unknown',
+          },
         });
 
         setSnackbarMessages({
@@ -70,8 +75,6 @@ const Toolbar: React.FC = () => {
     const predict1HAnd13COnPredict = generalSettings
       .find((category) => category.settingsCategoryName === 'General')
       ?.settings.find((setting) => setting.key === 'predict1HAnd13COnPredict');
-
-    console.log(predict1HAnd13COnPredict);
 
     if (inputSmilesBar) {
       const confirmOnInputSMILES = generalSettings
@@ -265,6 +268,7 @@ const Toolbar: React.FC = () => {
         anchorEl={anchorElLoad}
         open={openLoadMenu}
         onClose={() => setAnchorElLoad(null)}
+        sx={{ position: 'absolute' }}
       >
         <Stack direction="column" spacing={1} padding={1}>
           <MenuItem

@@ -12,7 +12,6 @@ const containerBoxStyle: React.CSSProperties = {
   gap: 1,
   marginTop: '3px',
   borderBottom: '3px solid #525252',
-  overflow: 'hidden',
 };
 
 const tabsWrapperStyle: React.CSSProperties = {
@@ -55,14 +54,22 @@ const closeButtonBaseStyle: React.CSSProperties = {
   color: 'inherit',
 };
 
-const menuIconButtonStyle: React.CSSProperties = { color: '#167782' };
+const menuIconButtonStyle: React.CSSProperties = {
+  color: '#167782',
+  padding: '0',
+};
 
 const closeButtonMenuStyle: React.CSSProperties = {
   marginLeft: 'auto',
   cursor: 'pointer',
 };
 
-// Styles dynamiques selon état isActive et index
+const moreDivStyle: React.CSSProperties = {
+  marginTop: 'auto',
+  marginBottom: 'auto',
+  marginRight: '4px',
+};
+
 const getTabBoxStyle = (isActive: boolean, index: number): SxProps<Theme> => ({
   display: 'flex',
   minWidth: '40px',
@@ -173,6 +180,10 @@ const TabBar: React.FC = () => {
               newTab({
                 smiles: '',
                 spectrum: [],
+                peaksInfos: [],
+                metadata: {
+                  nucleusType: 'Unknown',
+                },
               })
             }
           >
@@ -186,7 +197,7 @@ const TabBar: React.FC = () => {
           </Box>
         </div>
 
-        <div>
+        <div style={moreDivStyle}>
           {tabs.current.length > maxVisibleTabs && (
             <>
               <IconButton onClick={handleMenuOpen} sx={menuIconButtonStyle}>

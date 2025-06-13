@@ -5,7 +5,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import LeftPane from './LeftPan/LeftPan';
+import LeftPan from './LeftPan/LeftPan';
 import RightPan from './RightPan/RightPan';
 import { useAppContext } from '../context/AppContext';
 import { Box, CircularProgress, Typography, Backdrop } from '@mui/material';
@@ -14,6 +14,10 @@ export const MIN_WIDTH_LEFT_PAN = 550;
 export const RESIZE_BAR_WIDTH = 6;
 export const MIN_WIDTH_RIGHT_PAN = 380;
 export const MINIMIZED_BAR_WIDTH = 30;
+export const NAVBAR_HEIGHT = 57;
+export const TABBAR_HEIGHT = 40;
+export const MIN_HEIGHT_LEFT_UPPER_PAN = 300;
+export const MIN_HEIGHT_LEFT_LOWER_PAN = 150;
 
 const resizableLayoutDivStyle: React.CSSProperties = {
   display: 'flex',
@@ -41,33 +45,59 @@ const ResizableLayout: React.FC = () => {
 
   const initialLeftWidth = window.innerWidth / 2;
   const [leftWidth, setLeftWidth] = useState<number>(initialLeftWidth);
+  const initialLeftUpperHeight =
+    (window.innerHeight - NAVBAR_HEIGHT - TABBAR_HEIGHT) * 0.7;
+  const [leftUpperHeight, setLeftUpperHeight] = useState<number>(
+    initialLeftUpperHeight,
+  );
 
-  const [isLeftPanReduced, reduceLeftPan] = useState(false);
+  const [isLeftUpperPanReduced, reduceLeftUpperPan] = useState(false);
+  const [isLeftLowerPanReduced, reduceLeftLowerPan] = useState(false);
   const [isRightPanReduced, reduceRightPan] = useState(false);
+
+  const isLeftPanReduced = isLeftUpperPanReduced && isLeftLowerPanReduced;
 
   const isResizingRef = useRef(false);
 
-  const aPanIsReduced = isLeftPanReduced || isRightPanReduced;
+  const leftOrRightPanIsReduced = isLeftPanReduced || isRightPanReduced;
+
+  const reduceLeftPan = (reduce: boolean) => {
+    reduceLeftUpperPan(reduce);
+    reduceLeftLowerPan(reduce);
+  };
 
   const adjustPanel = useCallback(() => {
     const totalWidth = window.innerWidth;
     if (!isLeftPanReduced && !isRightPanReduced) {
       if (
         totalWidth >=
-        MIN_WIDTH_LEFT_PAN + MIN_WIDTH_RIGHT_PAN + RESIZE_BAR_WIDTH
+        MIN_WIDTH_LEFT_PAN +
+          MIN_WIDTH_RIGHT_PAN +
+          RESIZE_BAR_WIDTH +
+          Number(isLeftUpperPanReduced || isLeftLowerPanReduced) *
+            MINIMIZED_BAR_WIDTH
       ) {
         const desiredLeftWidth =
           MIN_WIDTH_LEFT_PAN +
           (totalWidth -
-            (RESIZE_BAR_WIDTH + MIN_WIDTH_LEFT_PAN + MIN_WIDTH_RIGHT_PAN)) /
+            (MIN_WIDTH_LEFT_PAN +
+              MIN_WIDTH_RIGHT_PAN +
+              RESIZE_BAR_WIDTH +
+              Number(isLeftUpperPanReduced || isLeftLowerPanReduced) *
+                MINIMIZED_BAR_WIDTH)) /
             2;
 
-        reduceLeftPan(false);
         reduceRightPan(false);
         setLeftWidth(desiredLeftWidth);
       } else {
-        if (totalWidth >= MIN_WIDTH_LEFT_PAN + MINIMIZED_BAR_WIDTH) {
-          reduceLeftPan(false);
+        if (
+          totalWidth >=
+          MIN_WIDTH_LEFT_PAN +
+            Number(isLeftUpperPanReduced || isLeftLowerPanReduced) *
+              MINIMIZED_BAR_WIDTH +
+            MINIMIZED_BAR_WIDTH
+        ) {
+          if (isLeftPanReduced) reduceLeftPan(false);
           reduceRightPan(true);
           setLeftWidth(totalWidth);
         } else {
@@ -83,7 +113,12 @@ const ResizableLayout: React.FC = () => {
         setLeftWidth(totalWidth - MINIMIZED_BAR_WIDTH);
       }
     }
-  }, [isLeftPanReduced, isRightPanReduced]);
+  }, [
+    isLeftLowerPanReduced,
+    isLeftPanReduced,
+    isLeftUpperPanReduced,
+    isRightPanReduced,
+  ]);
 
   useEffect(() => {
     adjustPanel();
@@ -98,49 +133,115 @@ const ResizableLayout: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, [adjustPanel]);
 
-  function minimizeLeftPan() {
-    setLeftWidth(0);
-    reduceLeftPan(true);
-    reduceRightPan(false);
+  function minimizeLeftUpperPan() {
+    setLeftUpperHeight(0);
+    reduceLeftUpperPan(true);
+  }
+
+  function minimizeLeftLowerPan() {
+    setLeftUpperHeight(window.innerHeight);
+    reduceLeftLowerPan(true);
   }
 
   function minimizeRightPan() {
     setLeftWidth(window.innerWidth);
     reduceRightPan(true);
-    reduceLeftPan(false);
+    if (isLeftPanReduced) reduceLeftPan(false);
+    setLeftUpperHeight(initialLeftUpperHeight);
   }
 
-  function expandPanel(target: 'LEFT' | 'RIGHT') {
-    const totalWidth = window.innerWidth;
-
-    if (
-      totalWidth >=
-      MIN_WIDTH_LEFT_PAN + MIN_WIDTH_RIGHT_PAN + RESIZE_BAR_WIDTH
-    ) {
-      const desiredLeftWidth =
-        MIN_WIDTH_LEFT_PAN +
-        (totalWidth -
-          (RESIZE_BAR_WIDTH + MIN_WIDTH_LEFT_PAN + MIN_WIDTH_RIGHT_PAN)) /
-          2;
-
-      reduceLeftPan(false);
+  useEffect(() => {
+    if (isLeftLowerPanReduced && isLeftUpperPanReduced && isRightPanReduced) {
       reduceRightPan(false);
-      setLeftWidth(desiredLeftWidth);
-    } else {
-      if (target === 'LEFT') {
-        reduceLeftPan(false);
-        reduceRightPan(true);
-        setLeftWidth(totalWidth);
-      } else {
-        reduceRightPan(false);
-        reduceLeftPan(true);
-        setLeftWidth(0);
+    }
+  }, [isLeftLowerPanReduced, isLeftUpperPanReduced, isRightPanReduced]);
+
+  function expandPanel(target: 'LEFT' | 'RIGHT' | 'LEFT_UPPER' | 'LEFT_LOWER') {
+    const totalWidth = window.innerWidth;
+    const totalHeight = window.innerHeight;
+
+    const availableHeight =
+      totalHeight - RESIZE_BAR_WIDTH - MINIMIZED_BAR_WIDTH;
+
+    const preferredLeftUpperHeight =
+      (window.innerHeight - NAVBAR_HEIGHT - TABBAR_HEIGHT) * 0.7;
+
+    switch (target) {
+      case 'LEFT':
+      case 'RIGHT': {
+        const desiredLeftWidth =
+          MIN_WIDTH_LEFT_PAN +
+          (totalWidth -
+            (RESIZE_BAR_WIDTH + MIN_WIDTH_LEFT_PAN + MIN_WIDTH_RIGHT_PAN)) /
+            2;
+
+        const enoughRoom =
+          totalWidth >=
+          MIN_WIDTH_LEFT_PAN + MIN_WIDTH_RIGHT_PAN + RESIZE_BAR_WIDTH;
+
+        if (enoughRoom) {
+          reduceRightPan(false);
+          setLeftWidth(desiredLeftWidth);
+        } else {
+          if (target === 'LEFT') {
+            reduceRightPan(true);
+            reduceLeftUpperPan(false);
+            reduceLeftLowerPan(false);
+            setLeftWidth(totalWidth);
+            setLeftUpperHeight(preferredLeftUpperHeight);
+          } else {
+            reduceLeftPan(true);
+            reduceRightPan(false);
+            setLeftWidth(0);
+          }
+        }
+        break;
       }
+
+      case 'LEFT_UPPER':
+      case 'LEFT_LOWER': {
+        const isOtherReduced =
+          target === 'LEFT_UPPER'
+            ? isLeftLowerPanReduced
+            : isLeftUpperPanReduced;
+
+        const enoughRoom =
+          availableHeight >=
+          MIN_HEIGHT_LEFT_UPPER_PAN +
+            MIN_HEIGHT_LEFT_LOWER_PAN +
+            RESIZE_BAR_WIDTH;
+
+        if (enoughRoom || isOtherReduced) {
+          if (target === 'LEFT_UPPER') {
+            reduceLeftUpperPan(false);
+            if (!isLeftLowerPanReduced) {
+              setLeftUpperHeight(preferredLeftUpperHeight);
+            }
+          } else {
+            reduceLeftLowerPan(false);
+            if (!isLeftUpperPanReduced) {
+              setLeftUpperHeight(preferredLeftUpperHeight);
+            }
+          }
+        } else {
+          if (target === 'LEFT_UPPER') {
+            reduceLeftLowerPan(true);
+            reduceLeftUpperPan(false);
+          } else {
+            reduceLeftUpperPan(true);
+            reduceLeftLowerPan(false);
+          }
+        }
+        break;
+      }
+
+      default:
+        break;
     }
   }
 
   const handleMouseDown = () => {
-    if (aPanIsReduced) return;
+    if (leftOrRightPanIsReduced) return;
     isResizingRef.current = true;
     document.body.style.userSelect = 'none';
   };
@@ -161,20 +262,21 @@ const ResizableLayout: React.FC = () => {
     document.body.style.userSelect = '';
   };
 
-  useState(() => {
+  useEffect(() => {
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  });
+  }, []);
 
   const leftPanDivStyle = useMemo<React.CSSProperties>(
     () => ({
       width: leftWidth,
       height: '100%',
       minWidth: '30px',
+      position: 'relative',
     }),
     [leftWidth],
   );
@@ -182,14 +284,19 @@ const ResizableLayout: React.FC = () => {
   return (
     <div style={resizableLayoutDivStyle}>
       <div className="menu-clair" style={leftPanDivStyle}>
-        <LeftPane
+        <LeftPan
+          leftUpperHeight={leftUpperHeight}
+          setLeftUpperHeight={setLeftUpperHeight}
           isLeftPanReduced={isLeftPanReduced}
-          minimizeLeftPan={minimizeLeftPan}
+          isLeftUpperPanReduced={isLeftUpperPanReduced}
+          isLeftLowerPanReduced={isLeftLowerPanReduced}
+          minimizeLeftUpperPan={minimizeLeftUpperPan}
+          minimizeLeftLowerPan={minimizeLeftLowerPan}
           expandPanel={expandPanel}
         />
       </div>
 
-      {!aPanIsReduced && (
+      {!leftOrRightPanIsReduced && (
         <span
           role="separator"
           aria-hidden="true"
@@ -240,8 +347,25 @@ const ResizableLayout: React.FC = () => {
               sx={{ mt: 3 }}
               color="text.secondary"
             >
-              SMILES sent to prediction:
+              SMILES sent to prediction
+              {tabs.current.find((t) => t.id === activeTab.current)?.metadata
+                .nucleusType &&
+              tabs.current.find((t) => t.id === activeTab.current)?.metadata
+                .nucleusType !== 'Unknown' ? (
+                <>
+                  {' ('}
+                  <span style={{ color: '#167782' }}>
+                    {
+                      tabs.current.find((t) => t.id === activeTab.current)
+                        ?.metadata.nucleusType
+                    }
+                  </span>
+                  {')'}
+                </>
+              ) : null}{' '}
+              :
             </Typography>
+
             <Typography
               variant="body1"
               sx={{ mt: 1, wordBreak: 'break-word', fontFamily: 'monospace' }}

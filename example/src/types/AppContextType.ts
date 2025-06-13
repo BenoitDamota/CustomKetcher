@@ -1,6 +1,8 @@
 import { GeneralSettings } from './GeneralSettingsType';
 import { ModelParameters } from './ModelParametersType';
+import { PeaksInfosTableInterface } from './PeaksInfosTableInterface';
 import { SnackbarMessage } from './SnackbarMessage';
+import { SpectrumInterface } from './SpectrumInterface';
 import { TabDataType } from './TabDataType';
 
 export type ModalName =
@@ -43,5 +45,9 @@ export type AppContextType = {
   setSnackbarMessages: React.Dispatch<React.SetStateAction<SnackbarMessage>>;
   getSpectrumImage?: () => Promise<string | null>;
   setGetSpectrumImage: (fn: () => Promise<string | null>) => void;
+  registerSpectrumInterface: (api: SpectrumInterface) => void;
+  spectrumInterfaceRef: React.RefObject<SpectrumInterface | null>;
+  registerPeaksInfosTableInterface: (api: PeaksInfosTableInterface) => void;
+  peaksInfosTableInterface: PeaksInfosTableInterface | null;
   renderVersion: number;
 };

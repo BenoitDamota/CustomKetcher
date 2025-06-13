@@ -26,7 +26,7 @@ const ModalTemplate: React.FC<ModalTemplateProps> = ({ children, onClose }) => {
       fullWidth
       maxWidth={activeModal === 'ManagePredictionModels' ? 'md' : 'sm'}
     >
-      <DialogTitle>
+      <DialogTitle sx={{ position: 'relative' }}>
         <button
           onClick={onClose}
           className="material-symbols-outlined hover-red"

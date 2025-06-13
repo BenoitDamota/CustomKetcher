@@ -1,5 +1,7 @@
 import axios from 'axios';
 import { SpectrumDataPoint } from '../types/SpectrumDataType';
+import { PeaksInfosData } from '../types/PeaksInfos';
+import { MetadataNRM } from '../types/metadataNRM';
 
 const apiUrl = process.env.REACT_APP_INTERN_API_PATH || '';
 
@@ -17,6 +19,8 @@ export interface ProjectFileSpectrumDataPointJSON {
 export interface ProjectFileParsedContentJSON {
   molecules: ProjectFileMoleculesJSON;
   spectrum: ProjectFileSpectrumDataPointJSON[];
+  peaksInfos: PeaksInfosData;
+  metadata: MetadataNRM;
 }
 
 export interface LoadProjectFileResult {
@@ -35,6 +39,10 @@ export async function loadProjectFile(
     data: {
       molecules: { format: '', data: '' },
       spectrum: [],
+      peaksInfos: [],
+      metadata: {
+        nucleusType: 'Unknown',
+      },
     },
   };
 
@@ -80,14 +88,16 @@ export async function loadProjectFile(
 
       const response = await axios.post(`${apiUrl}/api/loadJCAMP`, formData);
 
-      console.log(response);
-
       const spectrum = response.data.spectrum as SpectrumDataPoint[];
 
       result.success = 'JCAMP file successfully loaded!';
       result.data = {
         molecules: { format: '', data: '' },
         spectrum,
+        peaksInfos: [],
+        metadata: {
+          nucleusType: 'Unknown',
+        },
       };
 
       return result;
@@ -140,12 +150,16 @@ export function convertProjectToJSON(
   moleculesFormat: string,
   moleculesData: string,
   spectrumData: SpectrumDataPoint[],
+  peaksInfosData: PeaksInfosData,
+  metadataNRMData: MetadataNRM,
 ): string {
   const parsedContent = {
+    metadata: metadataNRMData,
     molecules: {
       format: moleculesFormat,
       data: moleculesData,
     },
+    peaksInfos: peaksInfosData,
     spectrum: spectrumData,
   } as ProjectFileParsedContentJSON;
 

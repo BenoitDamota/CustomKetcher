@@ -1,4 +1,11 @@
-import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { GeneralSettings } from '../types/GeneralSettingsType';
 import { ModelParameters } from '../types/ModelParametersType';
 import { SnackbarMessage } from '../types/SnackbarMessage';
@@ -10,6 +17,8 @@ import {
 } from '../utils/SettingsUtils';
 import { getKekuleSmilesFromKetcher } from '../utils/MoleculesUtils';
 import { Mutex } from '../utils/mutex';
+import { PeaksInfosTableInterface } from '../types/PeaksInfosTableInterface';
+import { SpectrumInterface } from '../types/SpectrumInterface';
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -39,6 +48,8 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       status: 'ready',
       smiles: '',
       spectrum: [],
+      peaksInfos: [],
+      metadata: { nucleusType: 'Unknown' },
     },
   ]);
 
@@ -166,10 +177,12 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     const updatedTab: TabDataType = {
+      id,
+      status: data.status ?? 'ready',
       smiles: data.smiles,
       spectrum: data.spectrum,
-      status: data.status ?? 'ready',
-      id,
+      peaksInfos: data.peaksInfos,
+      metadata: data.metadata,
     };
 
     tabs.current[index] = updatedTab;
@@ -243,6 +256,8 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         status: 'ready',
         smiles: '',
         spectrum: [],
+        peaksInfos: [],
+        metadata: { nucleusType: 'Unknown' },
       };
       tabs.current = [emptyTab];
       activeTab.current = emptyTab.id;
@@ -330,6 +345,23 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
+  // Handling spectrumInterface
+  const spectrumInterfaceRef = useRef<SpectrumInterface | null>(null);
+  const registerSpectrumInterface = useCallback((api: SpectrumInterface) => {
+    spectrumInterfaceRef.current = api;
+  }, []);
+
+  // Handling peaksInfosTableInterface
+  const peaksInfosTableInterfaceRef = useRef<PeaksInfosTableInterface | null>(
+    null,
+  );
+  const registerPeaksInfosTableInterface = useCallback(
+    (api: PeaksInfosTableInterface) => {
+      peaksInfosTableInterfaceRef.current = api;
+    },
+    [],
+  );
+
   return (
     <AppContext.Provider
       value={{
@@ -355,6 +387,10 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         setSnackbarMessages,
         getSpectrumImage,
         setGetSpectrumImage,
+        registerSpectrumInterface,
+        spectrumInterfaceRef,
+        registerPeaksInfosTableInterface,
+        peaksInfosTableInterface: peaksInfosTableInterfaceRef.current,
         renderVersion,
       }}
     >

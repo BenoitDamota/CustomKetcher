@@ -4,11 +4,15 @@ import { SnackbarMessage } from '../types/SnackbarMessage';
 import { SpectrumDataPoint } from '../types/SpectrumDataType';
 import { convertProjectToJSON } from './fileUtils';
 import { getKekuleSmilesFromKetcher } from './MoleculesUtils';
+import { PeaksInfosData } from '../types/PeaksInfos';
+import { MetadataNRM } from '../types/metadataNRM';
 const apiUrl = process.env.REACT_APP_INTERN_API_PATH || '';
 
 // Fonctions to export the project in JSON format
 export const exportJSON = async (
   spectrumData: SpectrumDataPoint[],
+  peaksInfos: PeaksInfosData,
+  metadata: MetadataNRM,
   setSnackbarMessages: React.Dispatch<React.SetStateAction<SnackbarMessage>>,
 ): Promise<
   { data: string; blob: Blob; filename: string } | { error: string }
@@ -18,19 +22,21 @@ export const exportJSON = async (
       throw new Error('Ketcher is not available');
     }
 
-    if (!(await window.ketcher.getSmiles())) {
-      return { error: 'No molecules found in Ketcher' };
-    }
+    let smiles: string | null = null;
 
-    const smiles: string | null = await getKekuleSmilesFromKetcher(
-      setSnackbarMessages,
-    );
+    smiles = await getKekuleSmilesFromKetcher(setSnackbarMessages);
 
     if (!smiles) {
-      throw new Error('No molecules obtained after kekulization');
+      smiles = '';
     }
 
-    const json = convertProjectToJSON('SMILES', smiles, spectrumData);
+    const json = convertProjectToJSON(
+      'SMILES',
+      smiles,
+      spectrumData,
+      peaksInfos,
+      metadata,
+    );
     const blob = new Blob([json], { type: 'application/json' });
 
     return {
@@ -136,6 +142,8 @@ export const exportMolIMG = async (
 // Fonction to export the project files in a ZIP file (JSON, SpectrumImage, MoleculeImage)
 export const exportZIP = async (
   spectrumData: SpectrumDataPoint[],
+  peaksInfosData: PeaksInfosData,
+  metadata: MetadataNRM,
   getSpectrumImage: (() => Promise<string | null>) | undefined,
   setSnackbarMessages: React.Dispatch<React.SetStateAction<SnackbarMessage>>,
 ): Promise<
@@ -144,7 +152,12 @@ export const exportZIP = async (
   try {
     const zip = new JSZip();
 
-    const jsonResult = await exportJSON(spectrumData, setSnackbarMessages);
+    const jsonResult = await exportJSON(
+      spectrumData,
+      peaksInfosData,
+      metadata,
+      setSnackbarMessages,
+    );
     if ('error' in jsonResult) {
       return { error: jsonResult.error };
     }

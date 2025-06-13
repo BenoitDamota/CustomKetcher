@@ -23,6 +23,8 @@ import {
   exportZIP,
 } from '../../../utils/exportUtils';
 import JSZip from 'jszip';
+import { PeaksInfosData } from '../../../types/PeaksInfos';
+import { MetadataNRM } from '../../../types/metadataNRM';
 
 const errorBoxSx: SxProps<Theme> = {
   backgroundColor: '#fdecea',
@@ -122,10 +124,17 @@ const ExportProjectModalTemplate: React.FC<Props> = ({ onClose }) => {
       }
 
       const spectrumData: SpectrumDataPoint[] = currentTab.spectrum;
+      const peaksInfos: PeaksInfosData = currentTab.peaksInfos;
+      const metadata: MetadataNRM = currentTab.metadata;
 
       setError(null);
       if (exportType === 'json') {
-        const result = await exportJSON(spectrumData, setSnackbarMessages);
+        const result = await exportJSON(
+          spectrumData,
+          peaksInfos,
+          metadata,
+          setSnackbarMessages,
+        );
         if ('error' in result) {
           setError(result.error);
           setPreviewData('');
@@ -166,6 +175,8 @@ const ExportProjectModalTemplate: React.FC<Props> = ({ onClose }) => {
         setPreviewData('');
         const result = await exportZIP(
           spectrumData,
+          peaksInfos,
+          metadata,
           getSpectrumImage,
           setSnackbarMessages,
         );
@@ -255,7 +266,7 @@ const ExportProjectModalTemplate: React.FC<Props> = ({ onClose }) => {
           <MenuItem value="json">JSON</MenuItem>
           <MenuItem value="spectrum-image">Spectrum Image</MenuItem>
           <MenuItem value="molecule-image">Molecule Image</MenuItem>
-          <MenuItem value="zip">ZIP</MenuItem>
+          <MenuItem value="zip">ZIP (All Formats)</MenuItem>
         </Select>
       </FormControl>
 
