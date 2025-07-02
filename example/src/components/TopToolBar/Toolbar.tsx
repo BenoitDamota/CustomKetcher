@@ -50,6 +50,7 @@ const Toolbar: React.FC = () => {
 
         newTab({
           smiles: data.molecules.format === 'SMILES' ? data.molecules.data : '',
+          inChIKey: '',
           spectrum: data.spectrum || [],
           peaksInfos: data.peaksInfos || [],
           metadata: {

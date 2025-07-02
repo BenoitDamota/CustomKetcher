@@ -47,6 +47,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       id: 1,
       status: 'ready',
       smiles: '',
+      inChIKey: '',
       spectrum: [],
       peaksInfos: [],
       metadata: { nucleusType: 'Unknown' },
@@ -112,10 +113,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
-    let currentSmiles: string | null = await window.ketcher.getSmiles();
-    if (currentSmiles) {
-      currentSmiles = await getKekuleSmilesFromKetcher(setSnackbarMessages);
-    }
+    const currentSmiles: string | null = await window.ketcher.getSmiles();
     if (currentSmiles === null) {
       setSnackbarMessages({
         severity: 'error',
@@ -124,13 +122,24 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
-    if (lastActiveTabIndex !== -1) {
-      tabs.current[lastActiveTabIndex].smiles = currentSmiles;
+    // Using InChiKey as its a very stable molecule representation
+    const currentInChIKey = (await window.ketcher.getInChIKey()) || '';
+    const oldInChIKey = tabs.current[lastActiveTabIndex]?.inChIKey || '';
+
+    // Kekulize the SMILES if the molecules changed
+    if (currentInChIKey !== oldInChIKey && currentSmiles !== '') {
+      const kekulisedSmiles = await getKekuleSmilesFromKetcher(
+        setSnackbarMessages,
+      );
+      tabs.current[lastActiveTabIndex].inChIKey = currentInChIKey;
+      tabs.current[lastActiveTabIndex].smiles = kekulisedSmiles || '';
     }
 
     activeTab.current = newTabId;
+
     const activeSmile = tabs.current[tabIndex]?.smiles || '';
     await window.ketcher.setMolecule(activeSmile);
+
     rerender();
   };
 
@@ -180,6 +189,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       id,
       status: data.status ?? 'ready',
       smiles: data.smiles,
+      inChIKey: data.inChIKey,
       spectrum: data.spectrum,
       peaksInfos: data.peaksInfos,
       metadata: data.metadata,
@@ -255,6 +265,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         id: await getNextTabId(),
         status: 'ready',
         smiles: '',
+        inChIKey: '',
         spectrum: [],
         peaksInfos: [],
         metadata: { nucleusType: 'Unknown' },

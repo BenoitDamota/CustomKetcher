@@ -106,6 +106,7 @@ export const startPrediction = async (
     newTabId = await newTab({
       status: 'waiting',
       smiles,
+      inChIKey: '',
       spectrum: [],
       peaksInfos: [],
       metadata: {
@@ -139,6 +140,7 @@ export const startPrediction = async (
     const result = await updateTab(newTabId, {
       status: 'ready',
       smiles: predictionData.smiles,
+      inChIKey: '',
       spectrum: predictionData.spectrum,
       peaksInfos: predictionData.peaksInfos,
       metadata: predictionData.metadata,

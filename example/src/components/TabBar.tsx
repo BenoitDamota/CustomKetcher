@@ -179,6 +179,7 @@ const TabBar: React.FC = () => {
             onClick={() =>
               newTab({
                 smiles: '',
+                inChIKey: '',
                 spectrum: [],
                 peaksInfos: [],
                 metadata: {
