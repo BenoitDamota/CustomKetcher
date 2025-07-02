@@ -94,7 +94,6 @@ const LeftLowerPan: React.FC<Props> = ({
     TABBAR_HEIGHT -
     TOOLBAR_HEIGHT -
     leftUpperHeight;
-  console.log({ maxHeightTab });
 
   return (
     <div

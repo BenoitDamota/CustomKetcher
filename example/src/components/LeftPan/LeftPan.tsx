@@ -4,7 +4,6 @@ import {
   MIN_HEIGHT_LEFT_UPPER_PAN,
   MINIMIZED_BAR_WIDTH,
   NAVBAR_HEIGHT,
-  RESIZE_BAR_WIDTH,
   TABBAR_HEIGHT,
 } from '../ResizableLayout';
 import LeftLowerPan from './LeftLowerPan/LeftLowerPan';
@@ -119,11 +118,6 @@ const LeftPan: React.FC<Props> = ({
           TABBAR_HEIGHT -
           MIN_HEIGHT_LEFT_LOWER_PAN
     ) {
-      console.log({ newHeight });
-      console.log({
-        lowerH: window.innerHeight - RESIZE_BAR_WIDTH - newHeight,
-      });
-      console.log('---');
       setLeftUpperHeight(newHeight);
     }
   };
