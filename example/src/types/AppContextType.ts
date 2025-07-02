@@ -25,7 +25,7 @@ export type AppContextType = {
   tabs: React.MutableRefObject<TabDataType[]>;
   activeTab: React.MutableRefObject<number>;
   changeTab: (newTabId: number) => Promise<void>;
-  clearActiveTab: () => void;
+  clearActiveTab: () => 'error' | 'waitingTab' | 'success';
   newTab: (data: Omit<TabDataType, 'id'>) => Promise<number>;
   updateTab: (id: number, data: Omit<TabDataType, 'id'>) => Promise<boolean>;
   closeTab: (tabId: number, skipWarning?: boolean) => void;

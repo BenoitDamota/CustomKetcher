@@ -1,5 +1,8 @@
 import axios from 'axios';
-import { GeneralSettings } from '../types/GeneralSettingsType';
+import {
+  GeneralSettings,
+  GeneralSettingType,
+} from '../types/GeneralSettingsType';
 import { ModelParameters } from '../types/ModelParametersType';
 
 const apiUrl = process.env.REACT_APP_INTERN_API_PATH || '';
@@ -111,3 +114,13 @@ export const resetModelParametersToDefault =
       return null;
     }
   };
+
+export function getSetting(
+  settings: GeneralSettings,
+  categoryName: string,
+  key: string,
+): GeneralSettingType | undefined {
+  return settings
+    .find((category) => category.settingsCategoryName === categoryName)
+    ?.settings.find((setting) => setting.key === key);
+}

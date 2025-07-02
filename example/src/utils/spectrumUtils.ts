@@ -18,8 +18,11 @@ export const getSpectrumRegions = async (
     });
 
     const regions: SpectrumRegion[] = response.data?.regions;
+    console.log('detectSpectrumRegions', {
+      regions,
+    });
 
-    if (!regions || regions.length === 0) {
+    if ((!regions || regions.length === 0) && spectrum.length > 3) {
       setSnackbarMessages({
         severity: 'warning',
         message: 'No regions detected in the spectrum data.',

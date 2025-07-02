@@ -10,7 +10,7 @@ import {
   Stack,
 } from '@mui/material';
 import { startPredictionAuto } from '../../utils/PredictionUtils';
-import { saveGeneralSettings } from '../../utils/SettingsUtils';
+import { saveGeneralSettings, getSetting } from '../../utils/SettingsUtils';
 import DontShowAgainPartial from '../../overlays/dialogs/partials/DontShowAgainPartial';
 import { loadProjectFile, openFileInput } from '../../utils/fileUtils';
 
@@ -73,14 +73,18 @@ const Toolbar: React.FC = () => {
   }
 
   async function handlePrediction() {
-    const predict1HAnd13COnPredict = generalSettings
-      .find((category) => category.settingsCategoryName === 'General')
-      ?.settings.find((setting) => setting.key === 'predict1HAnd13COnPredict');
+    const predict1HAnd13COnPredict = getSetting(
+      generalSettings,
+      'General',
+      'predict1HAnd13COnPredict',
+    );
 
     if (inputSmilesBar) {
-      const confirmOnInputSMILES = generalSettings
-        .find((category) => category.settingsCategoryName === 'General')
-        ?.settings.find((setting) => setting.key === 'confirmOnInputSMILES');
+      const confirmOnInputSMILES = getSetting(
+        generalSettings,
+        'General',
+        'confirmOnInputSMILES',
+      );
 
       if (
         confirmOnInputSMILES !== undefined &&
@@ -128,9 +132,11 @@ const Toolbar: React.FC = () => {
   }
 
   const handleClearProject = async () => {
-    const confirmOnClear = generalSettings
-      .find((category) => category.settingsCategoryName === 'General')
-      ?.settings.find((setting) => setting.key === 'confirmOnClear');
+    const confirmOnClear = getSetting(
+      generalSettings,
+      'General',
+      'confirmOnClear',
+    );
 
     if (confirmOnClear !== undefined && confirmOnClear.value === true) {
       const confirmed = openConfirm.current
@@ -150,18 +156,35 @@ const Toolbar: React.FC = () => {
     if (!window.ketcher) {
       setSnackbarMessages({
         severity: 'error',
-        message: 'Failed to clear project: Ketcher instance not found',
+        message:
+          'Failed to clear the current project: Ketcher instance not found',
       });
       return;
     }
 
     window.ketcher.editor.clear();
-    clearActiveTab();
+    const clearStatus: 'error' | 'waitingTab' | 'success' = clearActiveTab();
 
-    setSnackbarMessages({
-      severity: 'success',
-      message: 'Successfully cleared the current project',
-    });
+    switch (clearStatus) {
+      case 'error':
+        setSnackbarMessages({
+          severity: 'error',
+          message: 'Failed to clear the current project',
+        });
+        break;
+      case 'waitingTab':
+        setSnackbarMessages({
+          severity: 'warning',
+          message: 'Clear Canceled : This tab is waiting for a prediction',
+        });
+        break;
+      case 'success':
+        setSnackbarMessages({
+          severity: 'success',
+          message: 'Successfully cleared the current project',
+        });
+        break;
+    }
   };
 
   return (

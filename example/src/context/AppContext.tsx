@@ -147,14 +147,24 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     const tabIndex = tabs.current.findIndex(
       (tab) => tab.id === activeTab.current,
     );
-    if (tabIndex === -1) return;
+    if (tabIndex === -1) return 'error';
+
+    if (tabs.current[tabIndex].status === 'waiting') return 'waitingTab';
 
     tabs.current[tabIndex] = {
       ...tabs.current[tabIndex],
+      status: 'ready',
       smiles: '',
+      inChIKey: '',
       spectrum: [],
+      peaksInfos: [],
+      metadata: {
+        nucleusType: 'Unknown',
+      },
     };
+
     rerender();
+    return 'success';
   };
 
   const newTab = async (data: Omit<TabDataType, 'id'>): Promise<number> => {
