@@ -37,6 +37,10 @@ const PeaksInfosTable: React.FC<Props> = ({ tableData }) => {
     registerPeaksInfosTableInterface(api);
   }, [registerPeaksInfosTableInterface]);
 
+  useEffect(() => {
+    setSelectedAtoms([]);
+  }, [tableData]);
+
   // Scroll vers la ligne visible quand les selectedAtoms changent
   useEffect(() => {
     if (!selectedAtoms.length) return;
