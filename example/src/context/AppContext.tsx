@@ -126,8 +126,12 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     const currentInChIKey = (await window.ketcher.getInChIKey()) || '';
     const oldInChIKey = tabs.current[lastActiveTabIndex]?.inChIKey || '';
 
+    if (currentSmiles === '') {
+      tabs.current[lastActiveTabIndex].inChIKey = '';
+      tabs.current[lastActiveTabIndex].smiles = '';
+    }
     // Kekulize the SMILES if the molecules changed
-    if (currentInChIKey !== oldInChIKey && currentSmiles !== '') {
+    else if (currentInChIKey !== oldInChIKey) {
       const kekulisedSmiles = await getKekuleSmilesFromKetcher(
         setSnackbarMessages,
       );
