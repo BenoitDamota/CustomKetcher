@@ -18,11 +18,11 @@ const AboutModalTemplate: React.FC<Props> = () => {
         <br />
         <strong>GitHub:</strong>{' '}
         <a
-          href="https://github.com/KreeZeG123/PredictionRMN"
+          href="https://github.com/BenoitDamota/PredictionRMN"
           target="_blank"
           rel="noopener noreferrer"
         >
-          KreeZeG123/PredictionRMN
+          BenoitDamota/PredictionRMN
         </a>
         <br />
         <strong>Technologies:</strong> React, Ketcher, Plotly, Python, Flask,

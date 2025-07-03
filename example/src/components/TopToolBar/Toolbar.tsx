@@ -410,7 +410,7 @@ const Toolbar: React.FC = () => {
               title="Visit Help Documentation"
               onClick={() =>
                 window.open(
-                  'https://github.com/KreeZeG123/PredictionRMN/blob/main/docs/user_guide.md',
+                  'https://github.com/BenoitDamota/PredictionRMN/blob/main/docs/user_docs/user_guide.md',
                   '_blank',
                 )
               }
@@ -438,7 +438,7 @@ const Toolbar: React.FC = () => {
             title="Visit Help Documentation"
             onClick={() =>
               window.open(
-                'https://github.com/KreeZeG123/PredictionRMN/blob/main/docs/user_guide.md',
+                'https://github.com/BenoitDamota/PredictionRMN/blob/main/docs/user_docs/user_guide.md',
                 '_blank',
               )
             }
