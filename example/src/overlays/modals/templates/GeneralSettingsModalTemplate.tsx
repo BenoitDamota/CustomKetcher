@@ -87,7 +87,7 @@ const SettingsModalTemplate: React.FC<Props> = ({ onClose }) => {
     setSnackbarMessages({
       severity: 'success',
       message:
-        'All settings have been successfully restored to their default values',
+        'Settings successfully restored to their default values. Apply to save the changes.',
     });
   };
 

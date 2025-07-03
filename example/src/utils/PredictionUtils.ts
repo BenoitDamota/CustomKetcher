@@ -6,7 +6,7 @@ import {
 import { PredictionDataType } from '../types/PredictionDataType';
 import { SnackbarMessage } from '../types/SnackbarMessage';
 import { TabDataType } from '../types/TabDataType';
-import { NMRType } from '../types/metadataNRM';
+import { NMR_TYPES, NMRType } from '../types/metadataNRM';
 
 const apiUrl = process.env.REACT_APP_INTERN_API_PATH || '';
 
@@ -110,7 +110,7 @@ export const startPrediction = async (
       spectrum: [],
       peaksInfos: [],
       metadata: {
-        nucleusType: nmrType,
+        nucleusType: NMR_TYPES.includes(nmrType) ? nmrType : 'Unknown',
       },
     });
 
@@ -143,7 +143,12 @@ export const startPrediction = async (
       inChIKey: '',
       spectrum: predictionData.spectrum,
       peaksInfos: predictionData.peaksInfos,
-      metadata: predictionData.metadata,
+      metadata: {
+        ...predictionData.metadata,
+        nucleusType: NMR_TYPES.includes(predictionData.metadata.nucleusType)
+          ? predictionData.metadata.nucleusType
+          : 'Unknown',
+      },
     });
 
     if (result) {

@@ -1,0 +1,27 @@
+import { ModelParameters } from '../types/ModelParametersType';
+
+export const defaultModelParameters: ModelParameters = {
+  currentModel: 'Simple Predictor',
+  models: [
+    {
+      modelName: 'Simple Predictor',
+      endpoint: '/api/simpleModelPrediction',
+      parameters: [
+        {
+          key: 'version',
+          label: 'Version',
+          type: 'number',
+          required: true,
+          value: 0.1,
+        },
+        {
+          key: 'type',
+          label: 'NMR Type',
+          type: 'text',
+          required: true,
+          value: '1H',
+        },
+      ],
+    },
+  ],
+};
