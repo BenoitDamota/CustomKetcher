@@ -2,8 +2,7 @@ import axios from 'axios';
 import { SpectrumDataPoint } from '../types/SpectrumDataType';
 import { PeaksInfosData } from '../types/PeaksInfos';
 import { MetadataNRM } from '../types/metadataNRM';
-
-const apiUrl = process.env.REACT_APP_INTERN_API_PATH || '';
+import { apiUrl } from './api';
 
 export interface ProjectFileMoleculesJSON {
   format: string;

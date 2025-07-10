@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { SnackbarMessage } from '../types/SnackbarMessage';
-const apiUrl = process.env.REACT_APP_INTERN_API_PATH || '';
+import { apiUrl } from './api';
 
 export const getKekuleSmilesFromKetcher = async (
   setSnackbarMessages: React.Dispatch<React.SetStateAction<SnackbarMessage>>,

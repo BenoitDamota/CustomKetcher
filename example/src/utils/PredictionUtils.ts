@@ -7,8 +7,7 @@ import { PredictionDataType } from '../types/PredictionDataType';
 import { SnackbarMessage } from '../types/SnackbarMessage';
 import { TabDataType } from '../types/TabDataType';
 import { NMR_TYPES, NMRType } from '../types/metadataNRM';
-
-const apiUrl = process.env.REACT_APP_INTERN_API_PATH || '';
+import { apiUrl } from './api';
 
 const PREDICTION_MODEL_TIMEOUT = 300000;
 

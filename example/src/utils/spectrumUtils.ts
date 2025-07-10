@@ -1,8 +1,7 @@
 import axios from 'axios';
 import { SnackbarMessage } from '../types/SnackbarMessage';
 import { SpectrumDataPoint, SpectrumRegion } from '../types/SpectrumDataType';
-
-const apiUrl = process.env.REACT_APP_INTERN_API_PATH || '';
+import { apiUrl } from './api';
 
 export const getSpectrumRegions = async (
   spectrum: SpectrumDataPoint[],

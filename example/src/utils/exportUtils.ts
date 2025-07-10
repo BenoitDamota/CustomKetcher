@@ -6,7 +6,7 @@ import { convertProjectToJSON } from './fileUtils';
 import { getKekuleSmilesFromKetcher } from './MoleculesUtils';
 import { PeaksInfosData } from '../types/PeaksInfos';
 import { MetadataNRM } from '../types/metadataNRM';
-const apiUrl = process.env.REACT_APP_INTERN_API_PATH || '';
+import { apiUrl } from './api';
 
 // Fonctions to export the project in JSON format
 export const exportJSON = async (
